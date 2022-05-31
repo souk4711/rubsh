@@ -13,7 +13,6 @@ Gem::Specification.new do |spec|
   spec.homepage = "https://github.com/souk4711/rubsh"
   spec.license = "MIT"
   spec.required_ruby_version = ">= 2.6.0"
-  spec.rubygems_mfa_required = true
 
   spec.metadata["homepage_uri"] = spec.homepage
   spec.metadata["source_code_uri"] = "https://github.com/souk4711/rubsh"

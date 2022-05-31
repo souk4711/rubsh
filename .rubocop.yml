@@ -1,14 +1,10 @@
+require: standard
+
+inherit_gem:
+  standard: config/base.yml
+
 AllCops:
-  TargetRubyVersion: 2.6
-  NewCops: enable
+  SuggestExtensions: false
+  Exclude:
+    - 'bin/**/*'
 
-Style/StringLiterals:
-  Enabled: true
-  EnforcedStyle: double_quotes
-
-Style/StringLiteralsInInterpolation:
-  Enabled: true
-  EnforcedStyle: double_quotes
-
-Layout/LineLength:
-  Max: 120
