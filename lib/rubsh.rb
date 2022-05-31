@@ -11,4 +11,20 @@ module Rubsh
   def self.cmd(prog)
     Command.new(prog)
   end
+
+  def self.logger
+    return @logger if @logger
+
+    require "logger"
+    @logger = begin
+      formatter = ::Logger::Formatter.new
+      ::Logger.new($stdout, formatter: proc { |severity, datetime, progname, msg|
+        formatter.call(severity, datetime, "rubsh", msg.dump)
+      })
+    end
+  end
+
+  def self.logger=(logger)
+    @logger = logger
+  end
 end

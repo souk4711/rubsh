@@ -13,11 +13,11 @@ module Rubsh
       _no_err
       _long_sep
       _long_prefix
-      _log_msg
     ]
 
-    def initialize(prog, *args, **kwargs)
+    def initialize(prog, progpath, *args, **kwargs)
       @prog = prog
+      @progpath = progpath
       @args = []
 
       # Special Kwargs - Controlling Output
@@ -42,9 +42,6 @@ module Rubsh
       @_long_sep = "="
       @_long_prefix = "--"
 
-      # Special Kwargs - Misc
-      @_log_msg = nil
-
       opts = []
       args.each { |arg| opts << Option.build(arg) }
       kwargs.each { |k, v| opts << Option.build(k, v) }
@@ -53,7 +50,9 @@ module Rubsh
 
     def run!
       args = @args.map { |arg| arg.compile(long_sep: @_long_sep, long_prefix: @_long_prefix) }.compact.flatten
-      pid = Process.spawn([@prog, @prog], *args)
+      Rubsh.logger.debug([@progpath].concat(args).join(" "))
+
+      pid = Process.spawn([@progpath, @prog], *args)
       Process.wait(pid)
     end
 

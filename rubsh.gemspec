@@ -8,8 +8,8 @@ Gem::Specification.new do |spec|
   spec.authors = ["John Doe"]
   spec.email = ["johndoe@example.com"]
 
-  spec.summary = ""
-  spec.description = ""
+  spec.summary = "Inspired by python-sh, rubsh allows you to call any program as if it were a function."
+  spec.description = "Inspired by python-sh, rubsh allows you to call any program as if it were a function."
   spec.homepage = "https://github.com/souk4711/rubsh"
   spec.license = "MIT"
   spec.required_ruby_version = ">= 2.6.0"
