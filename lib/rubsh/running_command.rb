@@ -1,6 +1,6 @@
 module Rubsh
   class RunningCommand
-    USED_RESERVED_WORDS = %w[
+    USED_RESERVED_WORDS = %i[
       _out
       _err
       _err_to_out
@@ -63,10 +63,10 @@ module Rubsh
       opts.each do |opt|
         if opt.v.nil? # positional argument
           @args << Argument.new(opt.k, nil)
-        elsif opt.k.start_with?("_") # keyword argument
-          raise ::ArgumentError, "Future reserved words" unless USED_RESERVED_WORDS.include?(opt.k.to_s)
+        elsif opt.k.start_with?("_") # keyword argument - Special Kwargs
+          raise ::ArgumentError, format("Future reserved word: %s", opt.k) unless USED_RESERVED_WORDS.include?(opt.k.to_sym)
           extract_running_command_opt(opt)
-        else
+        else # keyword argument
           @args << Argument.new(opt.k, opt.v)
         end
       end

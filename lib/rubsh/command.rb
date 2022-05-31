@@ -6,7 +6,8 @@ module Rubsh
     end
 
     def method_missing(name, *args, **kwargs)
-      ::Kernel.raise ::ArgumentError, "Future reserved words" if name.start_with?("_")
+      ::Kernel.raise ::ArgumentError, format("Reserved word: %s", name) if %i[is_a? inspect methods].include?(name) # Suppress IRB/Pry warning
+      ::Kernel.raise ::ArgumentError, format("Future reserved word: %s", name) if name.start_with?("_")
       call(name, *args, **kwargs)
     end
 
