@@ -77,11 +77,23 @@ Rubsh.cmd("curl").("https://www.ruby-lang.org/", "-o", "page.html", "--silent")
 ### Baking
 
 ```ruby
-my_ls = Rubsh.cmd("ls")._bake("-l")
+# resolves to "/usr/bin/ls -l /tmp"
+ll = Rubsh.cmd("ls").bake("-l")
+ll.("/tmp")
 
-# equivalent, resolves to "/usr/bin/ls -l /tmp"
-my_ls.("/tmp")
+# equivalent
 Rubsh.cmd("ls").("-l", "/tmp")
+
+
+# calling whoami on a server. this is a lot to type out, especially if you wanted
+# to call many commands (not just whoami) back to back on the same server
+# resolves to "/usr/bin/ssh myserver.com -p 1393 whoami"
+Rubsh.cmd('ssh').("myserver.com", "-p 1393", "whoami")
+
+# wouldn't it be nice to bake the common parameters into the ssh command?
+myserver = Rubsh.cmd('ssh').bake("myserver.com", p: 1393)
+myserver.('whoami')
+myserver.('pwd')
 ```
 
 ### Piping
@@ -93,9 +105,14 @@ Rubsh.cmd("ls").("-l", "/tmp")
 ### Subcommands
 
 ```ruby
-# equivalent, resolves to "/usr/bin/git show HEAD"
-Rubsh.cmd("git").("show", "HEAD")
-Rubsh.cmd("git").show("HEAD")
+# `subcommand` is just a alias method of `bake`
+gst = Rubsh.cmd("git").subcommand("status")
+
+# resolves to "/usr/bin/git status"
+gst.()
+
+# resolves to "/usr/bin/git status -s"
+gst.("-s")
 ```
 
 ### Background Processes
