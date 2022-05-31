@@ -17,7 +17,8 @@ module Rubsh
 
     attr_reader :pid, :exit_code
 
-    def initialize(prog, progpath, *args, **kwargs)
+    def initialize(sh, prog, progpath, *args, **kwargs)
+      @sh = sh
       @prog = prog
       @progpath = progpath
       @args = []
@@ -54,7 +55,7 @@ module Rubsh
 
     def run!
       args = @args.map { |arg| arg.compile(long_sep: @_long_sep, long_prefix: @_long_prefix) }.compact.flatten
-      Rubsh.logger.debug([@progpath].concat(args).join(" "))
+      @sh.logger.debug([@progpath].concat(args).join(" "))
 
       pid = Process.spawn([@progpath, @prog], *args)
       pid, status = Process.wait2(pid)

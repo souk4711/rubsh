@@ -1,19 +1,20 @@
 module Rubsh
   class Command
-    def initialize(prog)
+    def initialize(sh, prog)
+      @sh = sh
       @prog = prog
       @progpath = resolve_progpath(@prog)
       @baked_opts = []
     end
 
     def call(*args, **kwargs)
-      rcmd = RunningCommand.new(@prog, @progpath, *@baked_opts, *args, **kwargs)
+      rcmd = RunningCommand.new(@sh, @prog, @progpath, *@baked_opts, *args, **kwargs)
       rcmd.run!
       rcmd
     end
 
     def bake(*args, **kwargs)
-      cmd = Command.new(@prog)
+      cmd = Command.new(@sh, @prog)
       cmd.__send__(:bake!, *@baked_opts, *args, **kwargs)
       cmd
     end
