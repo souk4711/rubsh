@@ -15,10 +15,14 @@ module Rubsh
       _long_prefix
     ]
 
+    attr_reader :pid, :exit_code
+
     def initialize(prog, progpath, *args, **kwargs)
       @prog = prog
       @progpath = progpath
       @args = []
+      @pid = nil
+      @exit_code = nil
 
       # Special Kwargs - Controlling Output
       @_out = nil
@@ -29,7 +33,7 @@ module Rubsh
       @_bg = false
       @_env = nil
       @_cwd = nil
-      @_ok_code = 0
+      @_ok_code = [0]
 
       # Special Kwargs - Communication
       @_in = nil
@@ -53,7 +57,13 @@ module Rubsh
       Rubsh.logger.debug([@progpath].concat(args).join(" "))
 
       pid = Process.spawn([@progpath, @prog], *args)
-      Process.wait(pid)
+      pid, status = Process.wait2(pid)
+
+      @pid = pid
+      @exit_code = status.exitstatus
+      handle_return_code(@exit_code)
+
+      self
     end
 
     private
@@ -72,6 +82,37 @@ module Rubsh
     end
 
     def extract_running_command_opt(opt)
+      case opt.k.to_sym
+      when :_out
+        @_out = opt.v
+      when :_err
+        @_err = opt.v
+      when :_err_to_out
+        @_err_to_out = opt.v
+      when :_bg
+        @_bg = opt.v
+      when :_env
+        @_env = opt.v
+      when :_cwd
+        @_cmd = opt.v
+      when :_ok_code
+        @_ok_code = [opt.v].flatten
+      when :_in
+        @_in = opt.v
+      when :_no_out
+        @_no_out = opt.v
+      when :_no_err
+        @_no_err = opt.v
+      when :_long_sep
+        @_long_sep = opt.v
+      when :_long_prefix
+        @_long_prefix = opt.v
+      end
+    end
+
+    def handle_return_code(code)
+      return if @_ok_code.include?(code)
+      raise Exceptions::CommandReturnFailureError, code
     end
   end
 end

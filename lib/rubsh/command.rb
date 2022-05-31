@@ -36,7 +36,7 @@ module Rubsh
         end
       end
 
-      ::Kernel.raise Exceptions::CommandNotFoundError if progpath.nil?
+      raise Exceptions::CommandNotFoundError if progpath.nil?
       progpath
     end
 

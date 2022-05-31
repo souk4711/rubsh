@@ -49,11 +49,7 @@ Or install it yourself as:
 ```ruby
 # resolves to "/usr/bin/ls -l /tmp --color=always"
 Rubsh.cmd("ls").("-l", "/tmp", color: "always")
-```
 
-### Keyword Arguments
-
-```ruby
 # resolves to "/usr/bin/curl https://www.ruby-lang.org/ -opage.html --silent"
 Rubsh.cmd("curl").("https://www.ruby-lang.org/", o: "page.html", silent: true)
 
@@ -65,7 +61,19 @@ Rubsh.cmd("curl").("https://www.ruby-lang.org/", "-o", "page.html", "--silent")
 ### Exit Codes
 
 ```ruby
-# NotImplementedError
+rcmd = Rubsh.cmd("ls").("/")
+rcmd.exit_code # => 0
+
+# a `CommandReturnFailureError` raised when run failure
+begin
+  Rubsh.cmd("ls").("/some/non-existant/folder")
+rescue Rubsh::Exceptions::CommandReturnFailureError => e
+  e.exit_code # => 2
+end
+
+# treat as success use `:_ok_code`
+rcmd = Rubsh.cmd("ls").("/some/non-existant/folder", _ok_code: [0, 2])
+rcmd.exit_code # => 2
 ```
 
 ### Redirection
@@ -83,7 +91,6 @@ ll.("/tmp")
 
 # equivalent
 Rubsh.cmd("ls").("-l", "/tmp")
-
 
 # calling whoami on a server. this is a lot to type out, especially if you wanted
 # to call many commands (not just whoami) back to back on the same server
