@@ -98,7 +98,6 @@ rcmd.stderr_data # => "err\n"
 rcmd = Rubsh.cmd("sh").("-c", "echo out; echo err >&2", _err_to_out: true)
 rcmd.stdout_data # => "out\nerr\n"
 rcmd.stderr_data # => nil
-
 ```
 
 ### Baking
@@ -125,7 +124,10 @@ myserver.('pwd')
 ### Piping
 
 ```ruby
-# NotImplementedError
+Rubsh.pipeline do |pipeline|
+  Rubsh.cmd("ls").("/etc", "-1", _pipeline: pipeline)
+  Rubsh.cmd("wc").("-l", _pipeline: pipeline)
+end.()
 ```
 
 ### Subcommands

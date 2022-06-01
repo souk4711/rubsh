@@ -13,6 +13,7 @@ module Rubsh
       _no_err
       _long_sep
       _long_prefix
+      _pipeline
     ]
 
     attr_reader :pid, :exit_code, :stdout_data, :stderr_data
@@ -55,31 +56,58 @@ module Rubsh
       @_long_sep = "="
       @_long_prefix = "--"
 
+      # Special Kwargs - Misc
+      @_pipeline = nil
+
       opts = []
       args.each { |arg| opts << Option.build(arg) }
       kwargs.each { |k, v| opts << Option.build(k, v) }
       extract_opts(opts)
     end
 
-    def run!
-      cmd_args = @args.map { |arg| arg.compile(long_sep: @_long_sep, long_prefix: @_long_prefix) }.compact.flatten
-      @sh.logger.debug([@progpath].concat(cmd_args).join(" "))
+    def call
+      if @_pipeline
+        @_pipeline.add_running_command(self)
+      else
+        run
+      end
+    end
 
+    def run
+      cmd_args = @args.map { |arg| arg.compile(long_sep: @_long_sep, long_prefix: @_long_prefix) }.compact.flatten
       redirection_args = compile_redirection_args
-      pid = Process.spawn([@progpath, @prog], *cmd_args, **redirection_args)
+
+      @sh.logger.debug([@progpath].concat(cmd_args).join(" "))
+      @pid = Process.spawn([@progpath, @prog], *cmd_args, **redirection_args)
 
       @in_rd&.close
       @out_wr&.close
       @err_wr&.close
-      pid, status = Process.wait2(pid)
 
-      @pid = pid
-      @exit_code = status.exitstatus
-      @stdout_data = @out_rd&.read || ""
-      @stderr_data = @err_rd&.read || ""
+      wait
+
+      @stdout_data = @out_rd&.read
+      @stderr_data = @err_rd&.read
+      @in_wr&.close
+      @out_rd&.close
+      @err_rd&.close
 
       handle_return_code
       self
+    end
+
+    def run_in_pipeline(redirection_args)
+      cmd_args = @args.map { |arg| arg.compile(long_sep: @_long_sep, long_prefix: @_long_prefix) }.compact.flatten
+
+      @sh.logger.debug([@progpath].concat(cmd_args).join(" "))
+      @pid = Process.spawn([@progpath, @prog], *cmd_args, **redirection_args)
+
+      self
+    end
+
+    def wait
+      _, status = Process.wait2(@pid)
+      @exit_code = status.exitstatus
     end
 
     private
@@ -123,7 +151,13 @@ module Rubsh
         @_long_sep = opt.v
       when :_long_prefix
         @_long_prefix = opt.v
+      when :_pipeline
+        @_pipeline = opt.v
       end
+    end
+
+    def compile_cmd_args
+      @args.map { |arg| arg.compile(long_sep: @_long_sep, long_prefix: @_long_prefix) }.compact.flatten
     end
 
     def compile_redirection_args

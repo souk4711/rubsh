@@ -9,7 +9,7 @@ module Rubsh
 
     def call(*args, **kwargs)
       rcmd = RunningCommand.new(@sh, @prog, @progpath, *@baked_opts, *args, **kwargs)
-      rcmd.run!
+      rcmd.call
       rcmd
     end
 

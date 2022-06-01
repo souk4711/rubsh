@@ -6,6 +6,10 @@ module Rubsh
       Command.new(self, prog)
     end
 
+    def pipeline
+      Pipeline.new(self)
+    end
+
     def logger
       return @logger if @logger
 
