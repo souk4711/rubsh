@@ -1,6 +1,6 @@
 # Rubsh
 
-Inspired by [python-sh], rubsh allows you to call any program as if it were a function:
+Rubsh (a.k.a. ruby-sh) - Inspired by [python-sh], allows you to call any program as if it were a function:
 
 ```ruby
 sh = Rubsh::Shell.new
@@ -51,7 +51,7 @@ rubsh relies on various Unix system calls and only works on Unix-like operating 
 Add this line to your application's Gemfile:
 
 ```ruby
-gem 'rubsh'
+gem 'ruby-sh', require: 'rubsh'
 ```
 
 And then execute:

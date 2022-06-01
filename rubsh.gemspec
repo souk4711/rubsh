@@ -3,13 +3,13 @@
 require_relative "lib/rubsh/version"
 
 Gem::Specification.new do |spec|
-  spec.name = "rubsh"
+  spec.name = "ruby-sh"
   spec.version = Rubsh::VERSION
   spec.authors = ["John Doe"]
   spec.email = ["johndoe@example.com"]
 
-  spec.summary = "Inspired by python-sh, rubsh allows you to call any program as if it were a function."
-  spec.description = "Inspired by python-sh, rubsh allows you to call any program as if it were a function."
+  spec.summary = "Rubsh (a.k.a. ruby-sh) - Inspired by python-sh, allows you to call any program as if it were a function."
+  spec.description = "Rubsh (a.k.a. ruby-sh) - Inspired by python-sh, allows you to call any program as if it were a function."
   spec.homepage = "https://github.com/souk4711/rubsh"
   spec.license = "MIT"
   spec.required_ruby_version = ">= 2.6.0"
