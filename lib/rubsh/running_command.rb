@@ -139,7 +139,7 @@ module Rubsh
       when :_bg
         @_bg = opt.v
       when :_env
-        @_env = opt.v
+        @_env = opt.v.transform_keys(&:to_s).transform_values(&:to_s)
       when :_timeout
         @_timeout = opt.v
       when :_cwd
@@ -200,40 +200,38 @@ module Rubsh
       args
     end
 
-    def run_in_background
+    def spawn
       cmd_args = compile_cmd_args
       redirection_args = compile_redirection_args
       extra_args = compile_extra_args
-
       @sh.logger.debug([@progpath].concat(cmd_args).join(" "))
-      @pid = ::Process.spawn([@progpath, @prog], *cmd_args, **redirection_args, **extra_args)
 
+      @pid =
+        if @_env
+          ::Process.spawn(@_env, [@progpath, @prog], *cmd_args, **redirection_args, **extra_args, unsetenv_others: true)
+        else
+          ::Process.spawn([@progpath, @prog], *cmd_args, **redirection_args, **extra_args)
+        end
+    ensure
       @in_rd&.close
       @out_wr&.close
       @err_wr&.close
-
-      Process.detach(@pid)
-    end
-
-    def run_in_foreground
-      cmd_args = compile_cmd_args
-      redirection_args = compile_redirection_args
-      extra_args = compile_extra_args
-
-      @sh.logger.info([@progpath].concat(cmd_args).join(" "))
-      @pid = ::Process.spawn([@progpath, @prog], *cmd_args, **redirection_args, **extra_args)
-
-      @in_rd&.close
-      @out_wr&.close
-      @err_wr&.close
-
-      wait(timeout: @_timeout)
-      handle_return_code
     end
 
     def handle_return_code
       return if @_ok_code.include?(@exit_code)
       raise Exceptions::CommandReturnFailureError, @exit_code
+    end
+
+    def run_in_background
+      spawn
+      Process.detach(@pid)
+    end
+
+    def run_in_foreground
+      spawn
+      wait(timeout: @_timeout)
+      handle_return_code
     end
   end
 end
