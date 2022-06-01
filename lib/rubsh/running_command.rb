@@ -6,6 +6,7 @@ module Rubsh
       _err_to_out
       _bg
       _env
+      _timeout
       _cwd
       _ok_code
       _in
@@ -42,6 +43,7 @@ module Rubsh
       # Special Kwargs - Execution
       @_bg = false
       @_env = nil
+      @_timeout = nil
       @_cwd = nil
       @_ok_code = [0]
 
@@ -69,47 +71,46 @@ module Rubsh
       if @_pipeline
         @_pipeline.add_running_command(self)
       else
-        run
+        @_bg ? run_in_background : run_in_foreground
       end
     end
 
-    def run
-      cmd_args = @args.map { |arg| arg.compile(long_sep: @_long_sep, long_prefix: @_long_prefix) }.compact.flatten
-      redirection_args = compile_redirection_args
+    def run_in_pipeline(redirection_args)
+      cmd_args = compile_cmd_args
       extra_args = compile_extra_args
 
       @sh.logger.debug([@progpath].concat(cmd_args).join(" "))
       @pid = ::Process.spawn([@progpath, @prog], *cmd_args, **redirection_args, **extra_args)
+    end
 
-      @in_rd&.close
-      @out_wr&.close
-      @err_wr&.close
+    def wait(timeout: nil)
+      _, status = nil, nil
+      if timeout
+        begin
+          ::Timeout.timeout(timeout) { _, status = ::Process.wait2(@pid) }
+        rescue ::Timeout::Error
+          timeout_occurred = true
+          ::Process.kill("TERM", @pid) # graceful stop
+          30.times do
+            _, status = ::Process.wait2(@pid, ::Process::WNOHANG | ::Process::WUNTRACED)
+            sleep 0.1 if status.nil?
+          end
+          ::Process.kill("KILL", @pid) # forceful stop
+        end
+      else
+        _, status = ::Process.wait2(@pid)
+      end
 
-      wait
-
+      @exit_code = status&.exitstatus
       @stdout_data = @out_rd&.read
       @stderr_data = @err_rd&.read
+      raise Exceptions::CommandTimeoutError if timeout_occurred
+    rescue Errno::ECHILD, Errno::ESRCH
+      raise Exceptions::CommandTimeoutError if timeout_occurred
+    ensure
       @in_wr&.close
       @out_rd&.close
       @err_rd&.close
-
-      handle_return_code
-      self
-    end
-
-    def run_in_pipeline(redirection_args)
-      cmd_args = @args.map { |arg| arg.compile(long_sep: @_long_sep, long_prefix: @_long_prefix) }.compact.flatten
-      extra_args = compile_extra_args
-
-      @sh.logger.debug([@progpath].concat(cmd_args).join(" "))
-      @pid = ::Process.spawn([@progpath, @prog], *cmd_args, **redirection_args, **extra_args)
-
-      self
-    end
-
-    def wait
-      _, status = ::Process.wait2(@pid)
-      @exit_code = status.exitstatus
     end
 
     private
@@ -119,7 +120,7 @@ module Rubsh
         if opt.v.nil? # positional argument
           @args << Argument.new(opt.k, nil)
         elsif opt.k.start_with?("_") # keyword argument - Special Kwargs
-          raise ::ArgumentError, format("Future reserved word: %s", opt.k) unless USED_RESERVED_WORDS.include?(opt.k.to_sym)
+          raise ::ArgumentError, format("Unsupported Kwargs: %s", opt.k) unless USED_RESERVED_WORDS.include?(opt.k.to_sym)
           extract_running_command_opt(opt)
         else # keyword argument
           @args << Argument.new(opt.k, opt.v)
@@ -139,6 +140,8 @@ module Rubsh
         @_bg = opt.v
       when :_env
         @_env = opt.v
+      when :_timeout
+        @_timeout = opt.v
       when :_cwd
         @_cwd = opt.v
       when :_ok_code
@@ -195,6 +198,37 @@ module Rubsh
       args = {}
       args[:chdir] = @_cwd if @_cwd
       args
+    end
+
+    def run_in_background
+      cmd_args = compile_cmd_args
+      redirection_args = compile_redirection_args
+      extra_args = compile_extra_args
+
+      @sh.logger.debug([@progpath].concat(cmd_args).join(" "))
+      @pid = ::Process.spawn([@progpath, @prog], *cmd_args, **redirection_args, **extra_args)
+
+      @in_rd&.close
+      @out_wr&.close
+      @err_wr&.close
+
+      Process.detach(@pid)
+    end
+
+    def run_in_foreground
+      cmd_args = compile_cmd_args
+      redirection_args = compile_redirection_args
+      extra_args = compile_extra_args
+
+      @sh.logger.debug([@progpath].concat(cmd_args).join(" "))
+      @pid = ::Process.spawn([@progpath, @prog], *cmd_args, **redirection_args, **extra_args)
+
+      @in_rd&.close
+      @out_wr&.close
+      @err_wr&.close
+
+      wait(timeout: @_timeout)
+      handle_return_code
     end
 
     def handle_return_code

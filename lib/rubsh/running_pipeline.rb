@@ -22,7 +22,7 @@ module Rubsh
 
     def call(**kwargs)
       kwargs.each do |k, v|
-        raise ::ArgumentError, format("Future reserved word: %s", k) unless USED_RESERVED_WORDS.include?(k.to_sym)
+        raise ::ArgumentError, format("Unsupported kwarg: %s", k) unless USED_RESERVED_WORDS.include?(k.to_sym)
         case k.to_sym
         when :out
           @_out = v

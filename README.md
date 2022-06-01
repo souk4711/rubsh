@@ -170,6 +170,11 @@ gst.("-s")
 #        have to run RunningCommand#wait on it to ensure it terminates.
 #   default value: false
 
+# _timeout:
+#   use: How much time, in seconds, we should give the process to complete. If the process
+#        does not finish within the timeout, it will be terminated.
+#   default value: nil
+
 # _env:
 #   use: A dictionary defining the only environment variables that will be made accessible to
 #        the process. If not specified, the calling process’s environment variables are used.
