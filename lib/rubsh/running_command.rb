@@ -76,9 +76,10 @@ module Rubsh
     def run
       cmd_args = @args.map { |arg| arg.compile(long_sep: @_long_sep, long_prefix: @_long_prefix) }.compact.flatten
       redirection_args = compile_redirection_args
+      extra_args = compile_extra_args
 
       @sh.logger.debug([@progpath].concat(cmd_args).join(" "))
-      @pid = ::Process.spawn([@progpath, @prog], *cmd_args, **redirection_args)
+      @pid = ::Process.spawn([@progpath, @prog], *cmd_args, **redirection_args, **extra_args)
 
       @in_rd&.close
       @out_wr&.close
@@ -98,9 +99,10 @@ module Rubsh
 
     def run_in_pipeline(redirection_args)
       cmd_args = @args.map { |arg| arg.compile(long_sep: @_long_sep, long_prefix: @_long_prefix) }.compact.flatten
+      extra_args = compile_extra_args
 
       @sh.logger.debug([@progpath].concat(cmd_args).join(" "))
-      @pid = ::Process.spawn([@progpath, @prog], *cmd_args, **redirection_args)
+      @pid = ::Process.spawn([@progpath, @prog], *cmd_args, **redirection_args, **extra_args)
 
       self
     end
@@ -138,7 +140,7 @@ module Rubsh
       when :_env
         @_env = opt.v
       when :_cwd
-        @_cmd = opt.v
+        @_cwd = opt.v
       when :_ok_code
         @_ok_code = [*opt.v]
       when :_in
@@ -186,6 +188,12 @@ module Rubsh
         end
       end
 
+      args
+    end
+
+    def compile_extra_args
+      args = {}
+      args[:chdir] = @_cwd if @_cwd
       args
     end
 

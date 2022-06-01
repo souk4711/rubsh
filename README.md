@@ -150,6 +150,84 @@ gst.("-s")
 # NotImplementedError
 ```
 
+### Special Kwargs - work with `Rubsh::Command#bake` & `Rubsh::Command#call`
+
+```ruby
+# _out:
+#   use: Where to redirect STDOUT to.
+#   default value: nil
+
+# _err:
+#   use: Where to redirect STDERR to.
+#   default value: nil
+
+# _err_to_out:
+#   use: If true, duplicate the file descriptor bound to the process’s STDOUT also to STDERR.
+#   default value: false
+
+# _bg:
+#   use: Runs a command in the background. The command will return immediately, and you will
+#        have to run RunningCommand#wait on it to ensure it terminates.
+#   default value: false
+
+# _env:
+#   use: A dictionary defining the only environment variables that will be made accessible to
+#        the process. If not specified, the calling process’s environment variables are used.
+#   default value: nil
+
+# _cwd:
+#   use: Current working directory of the process.
+#   default value: nil
+Rubsh.cmd('pwd').(_cwd: '/').stdout_data # => "/\n"
+Rubsh.cmd('pwd').(_cwd: Pathname.new('/home')).stdout_data # => "/home\n"
+
+# _ok_code:
+#   use: Some misbehaved programs use exit codes other than 0 to indicate success. Set to treats
+#        as success.
+#   default value: [0]
+
+# _in:
+#   use: Specifies an argument for the process to use as its standard input.
+#   default value: nil
+
+# _no_out:
+#   use: Disables STDOUT being internally stored. This is useful for commands that produce huge
+#        amounts of output that you don’t need, that would otherwise be hogging memory if stored
+#        internally by sh.
+#   default value: false
+
+# _no_err:
+#   use: Disables STDERR being internally stored. This is useful for commands that produce huge
+#        amounts of output that you don’t need, that would otherwise be hogging memory if stored
+#        internally by sh.
+#   default value: false
+
+# _long_sep:
+#   use: This is the character(s) that separate a program’s long argument’s key from the value.
+#   default value: "="
+
+# _long_prefix:
+#   use: This is the character(s) that prefix a long argument for the program being run. Some
+#        programs use single dashes, for example, and do not understand double dashes.
+#   default value: "--"
+
+# _pipeline:
+#   use: Specifies the :pipeline.
+#   default value: nil
+```
+
+### Special Kwargs - work with `Rubsh::RunningPipeline#call`
+
+```ruby
+# _out:
+#   use: where to redirect STDOUT to.
+#   default value: nil
+
+# _in
+#   use: Specifies an argument for the process to use as its standard input.
+#   default value: nil
+```
+
 
 ## Development
 
