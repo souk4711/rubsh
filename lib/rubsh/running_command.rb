@@ -79,7 +79,7 @@ module Rubsh
       cmd_args = compile_cmd_args
       extra_args = compile_extra_args
 
-      @sh.logger.debug([@progpath].concat(cmd_args).join(" "))
+      @sh.logger.info([@progpath].concat(cmd_args).join(" "))
       @pid = ::Process.spawn([@progpath, @prog], *cmd_args, **redirection_args, **extra_args)
     end
 
@@ -220,7 +220,7 @@ module Rubsh
       redirection_args = compile_redirection_args
       extra_args = compile_extra_args
 
-      @sh.logger.debug([@progpath].concat(cmd_args).join(" "))
+      @sh.logger.info([@progpath].concat(cmd_args).join(" "))
       @pid = ::Process.spawn([@progpath, @prog], *cmd_args, **redirection_args, **extra_args)
 
       @in_rd&.close

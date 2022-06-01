@@ -4,8 +4,7 @@ Inspired by [python-sh], rubsh allows you to call any program as if it were a fu
 
 ```ruby
 sh = Rubsh::Shell.new
-r = sh.cmd('ifconfig').('wlan0')
-print(r.stdout_data)
+print sh.cmd('ifconfig').('wlan0').stdout_data
 ```
 
 Output:
@@ -31,7 +30,7 @@ rubsh relies on various Unix system calls and only works on Unix-like operating 
 
 * [Installation](#installation)
 * [Usage](#usage)
-  * [Create a Shell](#create-a-shell)
+  * [Basic Syntax](#basic-syntax)
   * [Passing Arguments](#passing-arguments)
   * [Exit Codes](#exit-codes)
   * [Redirection](#redirection)
@@ -39,8 +38,8 @@ rubsh relies on various Unix system calls and only works on Unix-like operating 
   * [Piping](#piping)
   * [Subcommands](#subcommands)
   * [Background Processes](#background-processes)
+* [Reference](#reference)
   * [Special Kwargs](#special-kwargs)
-  * [Special Kwargs Pipeline](#special-kwargs-pipeline)
 * [Development](#development)
 * [Contributing](#contributing)
 * [License](#license)
@@ -66,23 +65,32 @@ Or install it yourself as:
 
 ## Usage
 
-### Create a Shell
+### Basic Syntax
 
 ```ruby
-# create an shell object for use
+# Create a shell
 sh = Rubsh::Shell.new
+
+# Create a command
+cmd = sh.cmd("ls")
+
+# Invoke a command
+result = cmd.("-la")
+
+# Print result
+print(result.stdout_data)
 ```
 
 ### Passing Arguments
 
 ```ruby
-# resolves to "/usr/bin/ls -l /tmp --color=always"
+# Resolves to "/usr/bin/ls -l /tmp --color=always"
 sh.cmd("ls").("-l", "/tmp", color: "always")
 
-# resolves to "/usr/bin/curl https://www.ruby-lang.org/ -opage.html --silent"
+# Resolves to "/usr/bin/curl https://www.ruby-lang.org/ -opage.html --silent"
 sh.cmd("curl").("https://www.ruby-lang.org/", o: "page.html", silent: true)
 
-# or if you prefer not to use keyword arguments, this does the same thing:
+# Or if you prefer not to use keyword arguments, this does the same thing:
 sh.cmd("curl").("https://www.ruby-lang.org/", "-o", "page.html", "--silent")
 
 ```
@@ -90,6 +98,7 @@ sh.cmd("curl").("https://www.ruby-lang.org/", "-o", "page.html", "--silent")
 ### Exit Codes
 
 ```ruby
+# Successful
 r = sh.cmd("ls").("/")
 r.exit_code # => 0
 
@@ -100,7 +109,7 @@ rescue Rubsh::Exceptions::CommandReturnFailureError => e
   e.exit_code # => 2
 end
 
-# treats as success use `:_ok_code`
+# Treats as success use `:_ok_code`
 r = sh.cmd("ls").("/some/non-existant/folder", _ok_code: [0, 1, 2])
 r = sh.cmd("ls").("/some/non-existant/folder", _ok_code: 0..2)
 r.exit_code # => 2
@@ -109,13 +118,13 @@ r.exit_code # => 2
 ### Redirection
 
 ```ruby
-# filename
+# Filename
 sh.cmd("ls").(_out: "/tmp/dir_content")
 sh.cmd("ls").(_out: ["/tmp/dir_content", "w"])
 sh.cmd("ls").(_out: ["/tmp/dir_content", "w", 0600])
 sh.cmd("ls").(_out: ["/tmp/dir_content", File::WRONLY|File::EXCL|File::CREAT, 0600])
 
-# file object
+# File object
 File.open("/tmp/dir_content", "w") { |f| sh.cmd("ls").(_out: f) }
 
 # `stdout_data` & `stderr_data`
@@ -123,7 +132,7 @@ r = sh.cmd("sh").("-c", "echo out; echo err >&2")
 r.stdout_data # => "out\n"
 r.stderr_data # => "err\n"
 
-# redirects stderr and stderr to the same place use `_err_to_out`
+# Redirects stderr and stderr to the same place use `_err_to_out`
 r = sh.cmd("sh").("-c", "echo out; echo err >&2", _err_to_out: true)
 r.stdout_data # => "out\nerr\n"
 r.stderr_data # => nil
@@ -132,19 +141,19 @@ r.stderr_data # => nil
 ### Baking
 
 ```ruby
-# resolves to "/usr/bin/ls -l /tmp"
+# Resolves to "/usr/bin/ls -l /tmp"
 ll = sh.cmd("ls").bake("-l")
 ll.("/tmp")
 
-# equivalent
+# Equivalent
 sh.cmd("ls").("-l", "/tmp")
 
-# calling whoami on a server. this is a lot to type out, especially if you wanted
-# to call many commands (not just whoami) back to back on the same server
-# resolves to "/usr/bin/ssh myserver.com -p 1393 whoami"
+# Calling whoami on a server. this is a lot to type out, especially if you wanted
+# to call many commands (not just whoami) back to back on the same server resolves
+# to "/usr/bin/ssh myserver.com -p 1393 whoami"
 sh.cmd('ssh').("myserver.com", "-p 1393", "whoami")
 
-# wouldn't it be nice to bake the common parameters into the ssh command?
+# Wouldn't it be nice to bake the common parameters into the ssh command?
 myserver = sh.cmd('ssh').bake("myserver.com", p: 1393)
 myserver.('whoami')
 myserver.('pwd')
@@ -153,63 +162,63 @@ myserver.('pwd')
 ### Piping
 
 ```ruby
+# Run a series of commands connected by `_pipeline`
 r = sh.pipeline do |pipeline|
   sh.cmd("echo").("hello world", _pipeline: pipeline)
   sh.cmd("wc").("-c", _pipeline: pipeline)
 end.()
-r.stdout_data # -> "12\n"
+r.stdout_data # => "12\n"
 ```
 
 ### Subcommands
 
 ```ruby
-# `subcommand` is just a alias method of `bake`
+# Just an alias method of `bake`
 gst = sh.cmd("git").subcommand("status")
 
-# resolves to "/usr/bin/git status"
-gst.()
-
-# resolves to "/usr/bin/git status -s"
-gst.("-s")
+gst.() # Resolves to "/usr/bin/git status"
+gst.("-s") # Resolves to "/usr/bin/git status -s"
 ```
 
 ### Background Processes
 
 ```ruby
-# blocks
+# Blocks
 sh.cmd("sleep").(3)
 p "...3 seconds later"
 
-# doesn't block
+# Doesn't block
 s = sh.cmd("sleep").(3, _bg: true)
 p "prints immediately!"
 s.wait()
 p "...and 3 seconds later"
 ```
 
+## Reference
+
 ### Special Kwargs
 
 * `_out`:
   * use: Where to redirect STDOUT to.
-  * default value: nil
+  * default value: `nil`
 * `_err`:
   * use: Where to redirect STDERR to.
-  * default value: nil
+  * default value: `nil`
 * `_err_to_out`:
   * use: If true, duplicate the file descriptor bound to the process’s STDOUT also to STDERR.
-  * default value: false
+  * default value: `false`
 * `_bg`:
   * use: Runs a command in the background. The command will return immediately, and you will have to run RunningCommand#wait on it to ensure it terminates.
-  * default value: false
+  * default value: `false`
 * `_timeout`:
   * use: How much time, in seconds, we should give the process to complete. If the process does not finish within the timeout, it will be terminated.
-  * default value: nil
+  * default value: `nil`
 * `_env`:
   * use: A dictionary defining the only environment variables that will be made accessible to the process. If not specified, the calling process’s environment variables are used.
-  * default value: nil
+  * default value: `nil`
 * `_cwd`:
   * use: Current working directory of the process.
-  * default value: nil
+  * default value: `nil`
   * sample:
     ```ruby
     sh.cmd('pwd').(_cwd: '/').stdout_data # => "/\n"
@@ -217,34 +226,25 @@ p "...and 3 seconds later"
     ```
 * `_ok_code`:
   * use: Some misbehaved programs use exit codes other than 0 to indicate success. Set to treats as success.
-  * default value: [0]
+  * default value: `[0]`
 * `_in`:
   * use: Specifies an argument for the process to use as its standard input.
-  * default value: nil
+  * default value: `nil`
 * `_no_out`:
-  * use: Disables STDOUT being internally stored. This is useful for commands that produce huge amounts of output that you don’t need, that would otherwise be hogging memory if stored internally by sh.
-  * default value: false
+  * use: Disables STDOUT being internally stored. This is useful for commands that produce huge amounts of output that you don’t need, that would otherwise be hogging memory if stored internally by Rubsh.
+  * default value: `false`
 * `_no_err`:
-  * use: Disables STDERR being internally stored. This is useful for commands that produce huge amounts of output that you don’t need, that would otherwise be hogging memory if stored internally by sh.
-  * default value: false
+  * use: Disables STDERR being internally stored. This is useful for commands that produce huge amounts of output that you don’t need, that would otherwise be hogging memory if stored internally by Rubsh.
+  * default value: `false`
 * `_long_sep`:
   * use: This is the character(s) that separate a program’s long argument’s key from the value.
-  * default value: "="
+  * default value: `"="`
 * `_long_prefix`:
   * use: This is the character(s) that prefix a long argument for the program being run. Some programs use single dashes, for example, and do not understand double dashes.
-  * default value: "--"
+  * default value: `"--"`
 * `_pipeline`:
   * use: Specifies the :pipeline.
-  * default value: nil
-
-### Special Kwargs Pipeline
-
-* `_out`:
-  * use: where to redirect STDOUT to.
-  * default value: nil
-* `_in`:
-  * use: Specifies an argument for the process to use as its standard input.
-  * default value: nil
+  * default value: `nil`
 
 
 ## Development
