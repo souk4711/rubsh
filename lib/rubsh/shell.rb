@@ -2,10 +2,6 @@ module Rubsh
   class Shell
     attr_writer :logger
 
-    def initialize
-      @logger = nil
-    end
-
     def cmd(prog)
       Command.new(self, prog)
     end

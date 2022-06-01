@@ -71,15 +71,34 @@ rescue Rubsh::Exceptions::CommandReturnFailureError => e
   e.exit_code # => 2
 end
 
-# treat as success use `:_ok_code`
-rcmd = Rubsh.cmd("ls").("/some/non-existant/folder", _ok_code: [0, 2])
+# treats as success use `:_ok_code`
+rcmd = Rubsh.cmd("ls").("/some/non-existant/folder", _ok_code: [0, 1, 2])
+rcmd = Rubsh.cmd("ls").("/some/non-existant/folder", _ok_code: 0..2)
 rcmd.exit_code # => 2
 ```
 
 ### Redirection
 
 ```ruby
-# NotImplementedError
+# filename
+Rubsh.cmd("ls").(_out: "/tmp/dir_content")
+Rubsh.cmd("ls").(_out: ["/tmp/dir_content", "w"])
+Rubsh.cmd("ls").(_out: ["/tmp/dir_content", "w", 0600])
+Rubsh.cmd("ls").(_out: ["/tmp/dir_content", File::WRONLY|File::EXCL|File::CREAT, 0600])
+
+# file object
+File.open("/tmp/dir_content", "w") { |f| Rubsh.cmd("ls").(_out: f) }
+
+# `stdout_data` & `stderr_data`
+rcmd = Rubsh.cmd("sh").("-c", "echo out; echo err >&2")
+rcmd.stdout_data # => "out\n"
+rcmd.stderr_data # => "err\n"
+
+# redirects stderr and stderr to the same place use `_err_to_out`
+rcmd = Rubsh.cmd("sh").("-c", "echo out; echo err >&2", _err_to_out: true)
+rcmd.stdout_data # => "out\nerr\n"
+rcmd.stderr_data # => nil
+
 ```
 
 ### Baking

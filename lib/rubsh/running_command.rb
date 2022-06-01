@@ -15,7 +15,7 @@ module Rubsh
       _long_prefix
     ]
 
-    attr_reader :pid, :exit_code
+    attr_reader :pid, :exit_code, :stdout_data, :stderr_data
 
     def initialize(sh, prog, progpath, *args, **kwargs)
       @sh = sh
@@ -24,6 +24,14 @@ module Rubsh
       @args = []
       @pid = nil
       @exit_code = nil
+      @stdout_data = nil
+      @stderr_data = nil
+      @in_rd = nil
+      @in_wr = nil
+      @out_rd = nil
+      @out_wr = nil
+      @err_rd = nil
+      @err_wr = nil
 
       # Special Kwargs - Controlling Output
       @_out = nil
@@ -54,16 +62,23 @@ module Rubsh
     end
 
     def run!
-      args = @args.map { |arg| arg.compile(long_sep: @_long_sep, long_prefix: @_long_prefix) }.compact.flatten
-      @sh.logger.debug([@progpath].concat(args).join(" "))
+      cmd_args = @args.map { |arg| arg.compile(long_sep: @_long_sep, long_prefix: @_long_prefix) }.compact.flatten
+      @sh.logger.debug([@progpath].concat(cmd_args).join(" "))
 
-      pid = Process.spawn([@progpath, @prog], *args)
+      redirection_args = compile_redirection_args
+      pid = Process.spawn([@progpath, @prog], *cmd_args, **redirection_args)
+
+      @in_rd&.close
+      @out_wr&.close
+      @err_wr&.close
       pid, status = Process.wait2(pid)
 
       @pid = pid
       @exit_code = status.exitstatus
-      handle_return_code(@exit_code)
+      @stdout_data = @out_rd&.read || ""
+      @stderr_data = @err_rd&.read || ""
 
+      handle_return_code
       self
     end
 
@@ -97,7 +112,7 @@ module Rubsh
       when :_cwd
         @_cmd = opt.v
       when :_ok_code
-        @_ok_code = [opt.v].flatten
+        @_ok_code = [*opt.v]
       when :_in
         @_in = opt.v
       when :_no_out
@@ -111,9 +126,38 @@ module Rubsh
       end
     end
 
-    def handle_return_code(code)
-      return if @_ok_code.include?(code)
-      raise Exceptions::CommandReturnFailureError, code
+    def compile_redirection_args
+      args = {}
+
+      if @_in
+        args[:in] = @_in
+      else
+        @in_rd, @in_wr = IO.pipe
+        args[:in] = @in_rd.fileno
+      end
+
+      if @_out
+        args[@_err_to_out ? [:out, :err] : :out] = @_out if @_out
+      elsif !@_no_out
+        @out_rd, @out_wr = IO.pipe
+        args[@_err_to_out ? [:out, :err] : :out] = @out_wr.fileno
+      end
+
+      unless @_err_to_out
+        if @_err
+          args[:err] = @_err if @_err
+        elsif !@_no_err
+          @err_rd, @err_wr = IO.pipe
+          args[:err] = @err_wr.fileno
+        end
+      end
+
+      args
+    end
+
+    def handle_return_code
+      return if @_ok_code.include?(@exit_code)
+      raise Exceptions::CommandReturnFailureError, @exit_code
     end
   end
 end
