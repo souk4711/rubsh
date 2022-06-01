@@ -78,7 +78,7 @@ module Rubsh
       redirection_args = compile_redirection_args
 
       @sh.logger.debug([@progpath].concat(cmd_args).join(" "))
-      @pid = Process.spawn([@progpath, @prog], *cmd_args, **redirection_args)
+      @pid = ::Process.spawn([@progpath, @prog], *cmd_args, **redirection_args)
 
       @in_rd&.close
       @out_wr&.close
@@ -100,13 +100,13 @@ module Rubsh
       cmd_args = @args.map { |arg| arg.compile(long_sep: @_long_sep, long_prefix: @_long_prefix) }.compact.flatten
 
       @sh.logger.debug([@progpath].concat(cmd_args).join(" "))
-      @pid = Process.spawn([@progpath, @prog], *cmd_args, **redirection_args)
+      @pid = ::Process.spawn([@progpath, @prog], *cmd_args, **redirection_args)
 
       self
     end
 
     def wait
-      _, status = Process.wait2(@pid)
+      _, status = ::Process.wait2(@pid)
       @exit_code = status.exitstatus
     end
 
@@ -166,14 +166,14 @@ module Rubsh
       if @_in
         args[:in] = @_in
       else
-        @in_rd, @in_wr = IO.pipe
+        @in_rd, @in_wr = ::IO.pipe
         args[:in] = @in_rd.fileno
       end
 
       if @_out
         args[@_err_to_out ? [:out, :err] : :out] = @_out if @_out
       elsif !@_no_out
-        @out_rd, @out_wr = IO.pipe
+        @out_rd, @out_wr = ::IO.pipe
         args[@_err_to_out ? [:out, :err] : :out] = @out_wr.fileno
       end
 
@@ -181,7 +181,7 @@ module Rubsh
         if @_err
           args[:err] = @_err if @_err
         elsif !@_no_err
-          @err_rd, @err_wr = IO.pipe
+          @err_rd, @err_wr = ::IO.pipe
           args[:err] = @err_wr.fileno
         end
       end

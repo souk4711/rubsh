@@ -61,8 +61,8 @@ Rubsh.cmd("curl").("https://www.ruby-lang.org/", "-o", "page.html", "--silent")
 ### Exit Codes
 
 ```ruby
-rcmd = Rubsh.cmd("ls").("/")
-rcmd.exit_code # => 0
+r = Rubsh.cmd("ls").("/")
+r.exit_code # => 0
 
 # a `CommandReturnFailureError` raised when run failure
 begin
@@ -72,9 +72,9 @@ rescue Rubsh::Exceptions::CommandReturnFailureError => e
 end
 
 # treats as success use `:_ok_code`
-rcmd = Rubsh.cmd("ls").("/some/non-existant/folder", _ok_code: [0, 1, 2])
-rcmd = Rubsh.cmd("ls").("/some/non-existant/folder", _ok_code: 0..2)
-rcmd.exit_code # => 2
+r = Rubsh.cmd("ls").("/some/non-existant/folder", _ok_code: [0, 1, 2])
+r = Rubsh.cmd("ls").("/some/non-existant/folder", _ok_code: 0..2)
+r.exit_code # => 2
 ```
 
 ### Redirection
@@ -90,14 +90,14 @@ Rubsh.cmd("ls").(_out: ["/tmp/dir_content", File::WRONLY|File::EXCL|File::CREAT,
 File.open("/tmp/dir_content", "w") { |f| Rubsh.cmd("ls").(_out: f) }
 
 # `stdout_data` & `stderr_data`
-rcmd = Rubsh.cmd("sh").("-c", "echo out; echo err >&2")
-rcmd.stdout_data # => "out\n"
-rcmd.stderr_data # => "err\n"
+r = Rubsh.cmd("sh").("-c", "echo out; echo err >&2")
+r.stdout_data # => "out\n"
+r.stderr_data # => "err\n"
 
 # redirects stderr and stderr to the same place use `_err_to_out`
-rcmd = Rubsh.cmd("sh").("-c", "echo out; echo err >&2", _err_to_out: true)
-rcmd.stdout_data # => "out\nerr\n"
-rcmd.stderr_data # => nil
+r = Rubsh.cmd("sh").("-c", "echo out; echo err >&2", _err_to_out: true)
+r.stdout_data # => "out\nerr\n"
+r.stderr_data # => nil
 ```
 
 ### Baking
@@ -124,10 +124,11 @@ myserver.('pwd')
 ### Piping
 
 ```ruby
-Rubsh.pipeline do |pipeline|
-  Rubsh.cmd("ls").("/etc", "-1", _pipeline: pipeline)
-  Rubsh.cmd("wc").("-l", _pipeline: pipeline)
+r = Rubsh.pipeline do |pipeline|
+  Rubsh.cmd("echo").("hello world", _pipeline: pipeline)
+  Rubsh.cmd("wc").("-c", _pipeline: pipeline)
 end.()
+r.stdout_data # -> "12\n"
 ```
 
 ### Subcommands

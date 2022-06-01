@@ -1,7 +1,7 @@
 module Rubsh
   module Exceptions
     # Base error class.
-    class Error < StandardError; end
+    class Error < ::StandardError; end
 
     # Raised when a command not found.
     class CommandNotFoundError < Error; end

@@ -7,7 +7,7 @@ module Rubsh
     end
 
     def pipeline
-      Pipeline.new(self)
+      RunningPipeline.new(self)
     end
 
     def logger
