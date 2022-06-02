@@ -10,7 +10,7 @@ module Rubsh
     class CommandReturnFailureError < Error
       attr_reader :exit_code
 
-      def initialize(exit_code, message = "")
+      def initialize(exit_code, message)
         @exit_code = exit_code
         super(message)
       end

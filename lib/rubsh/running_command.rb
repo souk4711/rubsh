@@ -24,6 +24,7 @@ module Rubsh
       @prog = prog
       @progpath = progpath
       @args = []
+      @prog_with_args = nil
       @pid = nil
       @exit_code = nil
       @stdout_data = nil
@@ -194,7 +195,9 @@ module Rubsh
       cmd_args = compile_cmd_args
       redirection_args ||= compile_redirection_args
       extra_args = compile_extra_args
-      @sh.logger.debug([@progpath].concat(cmd_args).join(" "))
+
+      @prog_with_args = [@progpath].concat(cmd_args).join(" ")
+      @sh.logger.debug(@prog_with_args)
 
       @pid =
         if @_env
@@ -210,7 +213,9 @@ module Rubsh
 
     def handle_return_code
       return if @_ok_code.include?(@exit_code)
-      raise Exceptions::CommandReturnFailureError, @exit_code
+
+      message = format("\n\n  RAN: %s\n\n  STDOUT:\n%s\n  STDERR:\n%s\n", @prog_with_args, @stdout_data, @stderr_data)
+      raise Exceptions::CommandReturnFailureError.new(@exit_code, message)
     end
 
     def run_in_background
