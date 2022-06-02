@@ -219,11 +219,6 @@ p "...and 3 seconds later"
 * `_cwd`:
   * use: Current working directory of the process.
   * default value: `nil`
-  * sample:
-    ```ruby
-    sh.cmd('pwd').call_with(_cwd: '/').stdout_data # => "/\n"
-    sh.cmd('pwd').call_with(_cwd: Pathname.new('/home')).stdout_data # => "/home\n"
-    ```
 * `_ok_code`:
   * use: Some misbehaved programs use exit codes other than 0 to indicate success. Set to treats as success.
   * default value: `[0]`
