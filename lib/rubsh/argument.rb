@@ -1,11 +1,12 @@
 module Rubsh
   class Argument
-    def initialize(name, value = nil)
-      @name, @value = name, value
+    def initialize(*args)
+      @name, @value = args
+      @is_positional = args.length < 2
     end
 
     def compile(long_sep: "=", long_prefix: "--")
-      return compile_positional_argument(@name) if @value.nil?
+      return compile_positional_argument(@name) if @is_positional
       compile_option_argument(@name, @value, long_sep: long_sep, long_prefix: long_prefix)
     end
 

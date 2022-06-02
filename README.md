@@ -84,8 +84,8 @@ print result.stdout_data
 ### Passing Arguments
 
 ```ruby
-# Resolves to "/usr/bin/ls -l /tmp --color=always"
-sh.cmd("ls").call_with("-l", "/tmp", color: "always")
+# Resolves to "/usr/bin/ls -l /tmp --color=always --human-readable"
+sh.cmd("ls").call_with("-l", "/tmp", color: "always", human_readable: true)
 
 # Resolves to "/usr/bin/curl https://www.ruby-lang.org/ -opage.html --silent"
 sh.cmd("curl").call_with("https://www.ruby-lang.org/", o: "page.html", silent: true)

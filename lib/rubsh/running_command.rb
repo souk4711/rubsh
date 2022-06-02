@@ -88,8 +88,8 @@ module Rubsh
       end
 
       @exit_code = status&.exitstatus
-      @stdout_data = @out_rd&.read
-      @stderr_data = @err_rd&.read
+      @stdout_data = @out_rd&.read || ""
+      @stderr_data = @err_rd&.read || ""
       raise Exceptions::CommandTimeoutError if timeout_occurred
     rescue Errno::ECHILD, Errno::ESRCH
       raise Exceptions::CommandTimeoutError if timeout_occurred
@@ -117,8 +117,8 @@ module Rubsh
 
     def extract_opts(opts)
       opts.each do |opt|
-        if opt.v.nil? # positional argument
-          @args << Argument.new(opt.k, nil)
+        if opt.positional? # positional argument
+          @args << Argument.new(opt.k)
         elsif opt.k.start_with?("_") # keyword argument - Special Kwargs
           raise ::ArgumentError, format("Unsupported Kwargs: %s", opt.k) unless SPECIAL_KWARGS.include?(opt.k.to_sym)
           extract_running_command_opt(opt)
