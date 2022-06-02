@@ -137,6 +137,12 @@ r.stderr_data # => "err\n"
 r = sh.cmd("sh").call_with("-c", "echo out; echo err >&2", _err_to_out: true)
 r.stdout_data # => "out\nerr\n"
 r.stderr_data # => nil
+
+# Read input from data
+sh.cmd("cat").call_with(_in_data: "hello").stdout_data # => "hello"
+
+# Read input from file
+sh.cmd("cat").call_with(_in: "/some/existant/file")
 ```
 
 ### Baking
@@ -225,6 +231,9 @@ p "...and 3 seconds later"
   * default value: `[0]`
 * `_in`:
   * use: Specifies an argument for the process to use as its standard input.
+  * default value: `nil`
+* `_in_data`:
+  * use: Specifies an argument for the process to use as its standard input data.
   * default value: `nil`
 * `_long_sep`:
   * use: This is the character(s) that separate a program’s long argument’s key from the value.

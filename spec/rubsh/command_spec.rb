@@ -151,6 +151,13 @@ RSpec.describe Rubsh::Command do
         end
       end
 
+      describe ":_in_data" do
+        it "specifies an argument for the process to use as its standard input data" do
+          r = cat.call_with(_in_data: "hello")
+          expect(r.stdout_data).to eq("hello")
+        end
+      end
+
       describe ":_long_sep" do
         it "specifies the character(s) that separate a program’s long argument’s key from the value" do
         end

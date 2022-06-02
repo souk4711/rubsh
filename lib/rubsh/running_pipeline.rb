@@ -3,6 +3,7 @@ module Rubsh
     SPECIAL_KWARGS = %i[
       _out
       _in
+      _in_data
     ]
 
     attr_reader :stdout_data
@@ -19,6 +20,7 @@ module Rubsh
 
       @_out = nil
       @_in = nil
+      @_in_data = nil
     end
 
     # @!visibility private
@@ -40,10 +42,12 @@ module Rubsh
       kwargs.each do |k, v|
         raise ::ArgumentError, format("Unsupported kwarg: %s", k) unless SPECIAL_KWARGS.include?(k.to_sym)
         case k.to_sym
-        when :out
+        when :_out
           @_out = v
-        when :in
+        when :_in
           @_in = v
+        when :_in_data
+          @_in_data = v
         end
       end
     end
@@ -79,6 +83,8 @@ module Rubsh
         _, wr = idx == @rcmds.length - 1 ? [nil, redirection_args[:out]] : pipes_filenos[idx]
         rcmd.__run_in_pipeline(in: previous_rd, out: wr)
       end
+
+      @in_wr&.write(@_in_data) if @_in_data
       @in_wr&.close
     ensure
       @in_rd&.close

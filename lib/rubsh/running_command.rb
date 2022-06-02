@@ -12,6 +12,7 @@ module Rubsh
       _cwd
       _ok_code
       _in
+      _in_data
       _long_sep
       _long_prefix
       _pipeline
@@ -50,6 +51,7 @@ module Rubsh
 
       # Special Kwargs - Communication
       @_in = nil
+      @_in_data = nil
 
       # Special Kwargs - Program Arguments
       @_long_sep = "="
@@ -143,6 +145,8 @@ module Rubsh
         @_ok_code = [*opt.v]
       when :_in
         @_in = opt.v
+      when :_in_data
+        @_in_data = opt.v
       when :_long_sep
         @_long_sep = opt.v
       when :_long_prefix
@@ -206,6 +210,8 @@ module Rubsh
         else
           ::Process.spawn([@progpath, @prog], *cmd_args, **redirection_args, **extra_args)
         end
+
+      @in_wr&.write(@_in_data) if @_in_data
       @in_wr&.close
     ensure
       @in_rd&.close
