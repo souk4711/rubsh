@@ -55,6 +55,7 @@ module Rubsh
         args[:in] = @_in
       else
         @in_rd, @in_wr = ::IO.pipe
+        @in_wr.sync = true
         args[:in] = @in_rd.fileno
       end
 
@@ -78,6 +79,7 @@ module Rubsh
         _, wr = idx == @rcmds.length - 1 ? [nil, redirection_args[:out]] : pipes_filenos[idx]
         rcmd.__run_in_pipeline(in: previous_rd, out: wr)
       end
+      @in_wr&.close
     ensure
       @in_rd&.close
       @out_wr&.close
@@ -86,7 +88,9 @@ module Rubsh
     def wait
       @rcmds.each_with_index do |rcmd, idx|
         rcmd.wait
-        _rd, wr = idx == @rcmds.length - 1 ? [nil, nil] : @pipes[idx]
+        previous_rd, _ = idx.zero? ? [nil, nil] : @pipes[idx - 1]
+        _, wr = idx == @rcmds.length - 1 ? [nil, nil] : @pipes[idx]
+        previous_rd&.close
         wr&.close
       end
 

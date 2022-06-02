@@ -163,6 +163,7 @@ module Rubsh
         args[:in] = @_in
       else
         @in_rd, @in_wr = ::IO.pipe
+        @in_wr.sync = true
         args[:in] = @in_rd.fileno
       end
 
@@ -205,6 +206,7 @@ module Rubsh
         else
           ::Process.spawn([@progpath, @prog], *cmd_args, **redirection_args, **extra_args)
         end
+      @in_wr&.close
     ensure
       @in_rd&.close
       @out_wr&.close
