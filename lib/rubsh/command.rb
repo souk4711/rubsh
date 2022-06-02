@@ -7,18 +7,23 @@ module Rubsh
       @baked_opts = []
     end
 
-    def call(*args, **kwargs)
+    def call_with(*args, **kwargs)
       rcmd = RunningCommand.new(@sh, @prog, @progpath, *@baked_opts, *args, **kwargs)
-      rcmd.call
+      rcmd.__run
       rcmd
     end
 
     def bake(*args, **kwargs)
       cmd = Command.new(@sh, @prog)
-      cmd.__send__(:bake!, *@baked_opts, *args, **kwargs)
+      cmd.__bake!(*@baked_opts, *args, **kwargs)
       cmd
     end
-    alias_method :subcommand, :bake
+
+    # @!visibility private
+    def __bake!(*args, **kwargs)
+      args.each { |arg| @baked_opts << Option.build(arg) }
+      kwargs.each { |k, v| @baked_opts << Option.build(k, v) }
+    end
 
     private
 
@@ -39,11 +44,6 @@ module Rubsh
 
       raise Exceptions::CommandNotFoundError if progpath.nil?
       progpath
-    end
-
-    def bake!(*args, **kwargs)
-      args.each { |arg| @baked_opts << Option.build(arg) }
-      kwargs.each { |k, v| @baked_opts << Option.build(k, v) }
     end
   end
 end

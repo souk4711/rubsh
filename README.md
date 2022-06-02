@@ -4,7 +4,7 @@ Rubsh (a.k.a. ruby-sh) - Inspired by [python-sh], allows you to call any program
 
 ```ruby
 sh = Rubsh::Shell.new
-print sh.cmd('ifconfig').('wlan0').stdout_data
+print sh.cmd('ifconfig').call_with('wlan0').stdout_data
 ```
 
 Output:
@@ -60,7 +60,7 @@ And then execute:
 
 Or install it yourself as:
 
-    $ gem install rubsh
+    $ gem install ruby-sh
 
 
 ## Usage
@@ -75,23 +75,23 @@ sh = Rubsh::Shell.new
 cmd = sh.cmd("ls")
 
 # Invoke a command
-result = cmd.("-la")
+result = cmd.call_with("-la")
 
 # Print result
-print(result.stdout_data)
+print result.stdout_data
 ```
 
 ### Passing Arguments
 
 ```ruby
 # Resolves to "/usr/bin/ls -l /tmp --color=always"
-sh.cmd("ls").("-l", "/tmp", color: "always")
+sh.cmd("ls").call_with("-l", "/tmp", color: "always")
 
 # Resolves to "/usr/bin/curl https://www.ruby-lang.org/ -opage.html --silent"
-sh.cmd("curl").("https://www.ruby-lang.org/", o: "page.html", silent: true)
+sh.cmd("curl").call_with("https://www.ruby-lang.org/", o: "page.html", silent: true)
 
 # Or if you prefer not to use keyword arguments, this does the same thing:
-sh.cmd("curl").("https://www.ruby-lang.org/", "-o", "page.html", "--silent")
+sh.cmd("curl").call_with("https://www.ruby-lang.org/", "-o", "page.html", "--silent")
 
 ```
 
@@ -99,19 +99,19 @@ sh.cmd("curl").("https://www.ruby-lang.org/", "-o", "page.html", "--silent")
 
 ```ruby
 # Successful
-r = sh.cmd("ls").("/")
+r = sh.cmd("ls").call_with("/")
 r.exit_code # => 0
 
 # a `CommandReturnFailureError` raised when run failure
 begin
-  sh.cmd("ls").("/some/non-existant/folder")
+  sh.cmd("ls").call_with("/some/non-existant/folder")
 rescue Rubsh::Exceptions::CommandReturnFailureError => e
   e.exit_code # => 2
 end
 
 # Treats as success use `:_ok_code`
-r = sh.cmd("ls").("/some/non-existant/folder", _ok_code: [0, 1, 2])
-r = sh.cmd("ls").("/some/non-existant/folder", _ok_code: 0..2)
+r = sh.cmd("ls").call_with("/some/non-existant/folder", _ok_code: [0, 1, 2])
+r = sh.cmd("ls").call_with("/some/non-existant/folder", _ok_code: 0..2)
 r.exit_code # => 2
 ```
 
@@ -119,21 +119,21 @@ r.exit_code # => 2
 
 ```ruby
 # Filename
-sh.cmd("ls").(_out: "/tmp/dir_content")
-sh.cmd("ls").(_out: ["/tmp/dir_content", "w"])
-sh.cmd("ls").(_out: ["/tmp/dir_content", "w", 0600])
-sh.cmd("ls").(_out: ["/tmp/dir_content", File::WRONLY|File::EXCL|File::CREAT, 0600])
+sh.cmd("ls").call_with(_out: "/tmp/dir_content")
+sh.cmd("ls").call_with(_out: ["/tmp/dir_content", "w"])
+sh.cmd("ls").call_with(_out: ["/tmp/dir_content", "w", 0600])
+sh.cmd("ls").call_with(_out: ["/tmp/dir_content", File::WRONLY|File::EXCL|File::CREAT, 0600])
 
 # File object
-File.open("/tmp/dir_content", "w") { |f| sh.cmd("ls").(_out: f) }
+File.open("/tmp/dir_content", "w") { |f| sh.cmd("ls").call_with(_out: f) }
 
 # `stdout_data` & `stderr_data`
-r = sh.cmd("sh").("-c", "echo out; echo err >&2")
+r = sh.cmd("sh").call_with("-c", "echo out; echo err >&2")
 r.stdout_data # => "out\n"
 r.stderr_data # => "err\n"
 
 # Redirects stderr and stderr to the same place use `_err_to_out`
-r = sh.cmd("sh").("-c", "echo out; echo err >&2", _err_to_out: true)
+r = sh.cmd("sh").call_with("-c", "echo out; echo err >&2", _err_to_out: true)
 r.stdout_data # => "out\nerr\n"
 r.stderr_data # => nil
 ```
@@ -143,20 +143,20 @@ r.stderr_data # => nil
 ```ruby
 # Resolves to "/usr/bin/ls -l /tmp"
 ll = sh.cmd("ls").bake("-l")
-ll.("/tmp")
+ll.call_with("/tmp")
 
 # Equivalent
-sh.cmd("ls").("-l", "/tmp")
+sh.cmd("ls").call_with("-l", "/tmp")
 
 # Calling whoami on a server. this is a lot to type out, especially if you wanted
 # to call many commands (not just whoami) back to back on the same server resolves
 # to "/usr/bin/ssh myserver.com -p 1393 whoami"
-sh.cmd('ssh').("myserver.com", "-p 1393", "whoami")
+sh.cmd('ssh').call_with("myserver.com", "-p 1393", "whoami")
 
 # Wouldn't it be nice to bake the common parameters into the ssh command?
 myserver = sh.cmd('ssh').bake("myserver.com", p: 1393)
-myserver.('whoami')
-myserver.('pwd')
+myserver.call_with('whoami')
+myserver.call_with('pwd')
 ```
 
 ### Piping
@@ -164,31 +164,31 @@ myserver.('pwd')
 ```ruby
 # Run a series of commands connected by `_pipeline`
 r = sh.pipeline do |pipeline|
-  sh.cmd("echo").("hello world", _pipeline: pipeline)
-  sh.cmd("wc").("-c", _pipeline: pipeline)
-end.()
+  sh.cmd("echo").call_with("hello world", _pipeline: pipeline)
+  sh.cmd("wc").call_with("-c", _pipeline: pipeline)
+end
 r.stdout_data # => "12\n"
 ```
 
 ### Subcommands
 
 ```ruby
-# Just an alias method of `bake`
-gst = sh.cmd("git").subcommand("status")
+# Use `bake`
+gst = sh.cmd("git").bake("status")
 
-gst.() # Resolves to "/usr/bin/git status"
-gst.("-s") # Resolves to "/usr/bin/git status -s"
+gst.call_with() # Resolves to "/usr/bin/git status"
+gst.call_with("-s") # Resolves to "/usr/bin/git status -s"
 ```
 
 ### Background Processes
 
 ```ruby
 # Blocks
-sh.cmd("sleep").(3)
+sh.cmd("sleep").call_with(3)
 p "...3 seconds later"
 
 # Doesn't block
-s = sh.cmd("sleep").(3, _bg: true)
+s = sh.cmd("sleep").call_with(3, _bg: true)
 p "prints immediately!"
 s.wait()
 p "...and 3 seconds later"
@@ -221,8 +221,8 @@ p "...and 3 seconds later"
   * default value: `nil`
   * sample:
     ```ruby
-    sh.cmd('pwd').(_cwd: '/').stdout_data # => "/\n"
-    sh.cmd('pwd').(_cwd: Pathname.new('/home')).stdout_data # => "/home\n"
+    sh.cmd('pwd').call_with(_cwd: '/').stdout_data # => "/\n"
+    sh.cmd('pwd').call_with(_cwd: Pathname.new('/home')).stdout_data # => "/home\n"
     ```
 * `_ok_code`:
   * use: Some misbehaved programs use exit codes other than 0 to indicate success. Set to treats as success.

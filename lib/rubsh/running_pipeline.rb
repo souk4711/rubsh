@@ -1,6 +1,6 @@
 module Rubsh
   class RunningPipeline
-    USED_RESERVED_WORDS = %i[
+    SPECIAL_KWARGS = %i[
       _out
       _in
     ]
@@ -21,22 +21,24 @@ module Rubsh
       @_in = nil
     end
 
-    def call(**kwargs)
+    # @!visibility private
+    def __add_running_command(cmd)
+      @rcmds << cmd
+    end
+
+    # @!visibility private
+    def __run(**kwargs)
       extract_opts(**kwargs)
       spawn
       wait
       self
     end
 
-    def add_running_command(cmd)
-      @rcmds << cmd
-    end
-
     private
 
     def extract_opts(**kwargs)
       kwargs.each do |k, v|
-        raise ::ArgumentError, format("Unsupported kwarg: %s", k) unless USED_RESERVED_WORDS.include?(k.to_sym)
+        raise ::ArgumentError, format("Unsupported kwarg: %s", k) unless SPECIAL_KWARGS.include?(k.to_sym)
         case k.to_sym
         when :out
           @_out = v
@@ -74,7 +76,7 @@ module Rubsh
       @rcmds.each_with_index do |rcmd, idx|
         previous_rd, _ = idx.zero? ? [redirection_args[:in], nil] : pipes_filenos[idx - 1]
         _, wr = idx == @rcmds.length - 1 ? [nil, redirection_args[:out]] : pipes_filenos[idx]
-        rcmd.run_in_pipeline(in: previous_rd, out: wr)
+        rcmd.__run_in_pipeline(in: previous_rd, out: wr)
       end
     ensure
       @in_rd&.close

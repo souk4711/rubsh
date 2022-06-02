@@ -4,12 +4,8 @@ module Rubsh
     private_class_method :new
 
     def self.build(k, v = nil)
-      if v.nil?
-        return new(k.k, k.v) if k.is_a?(Option)
-        new(k, nil)
-      else
-        new(k, v)
-      end
+      return new(k.k, k.v) if k.is_a?(Option)
+      new(k, v)
     end
 
     def initialize(k, v)

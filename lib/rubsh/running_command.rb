@@ -1,6 +1,8 @@
+require "timeout"
+
 module Rubsh
   class RunningCommand
-    USED_RESERVED_WORDS = %i[
+    SPECIAL_KWARGS = %i[
       _out
       _err
       _err_to_out
@@ -67,22 +69,6 @@ module Rubsh
       extract_opts(opts)
     end
 
-    def call
-      if @_pipeline
-        @_pipeline.add_running_command(self)
-      else
-        @_bg ? run_in_background : run_in_foreground
-      end
-    end
-
-    def run_in_pipeline(redirection_args)
-      cmd_args = compile_cmd_args
-      extra_args = compile_extra_args
-
-      @sh.logger.info([@progpath].concat(cmd_args).join(" "))
-      @pid = ::Process.spawn([@progpath, @prog], *cmd_args, **redirection_args, **extra_args)
-    end
-
     def wait(timeout: nil)
       _, status = nil, nil
       if timeout
@@ -113,6 +99,20 @@ module Rubsh
       @err_rd&.close
     end
 
+    # @!visibility private
+    def __run
+      if @_pipeline
+        @_pipeline.__add_running_command(self)
+      else
+        @_bg ? run_in_background : run_in_foreground
+      end
+    end
+
+    # @!visibility private
+    def __run_in_pipeline(redirection_args)
+      spawn(redirection_args: redirection_args)
+    end
+
     private
 
     def extract_opts(opts)
@@ -120,7 +120,7 @@ module Rubsh
         if opt.v.nil? # positional argument
           @args << Argument.new(opt.k, nil)
         elsif opt.k.start_with?("_") # keyword argument - Special Kwargs
-          raise ::ArgumentError, format("Unsupported Kwargs: %s", opt.k) unless USED_RESERVED_WORDS.include?(opt.k.to_sym)
+          raise ::ArgumentError, format("Unsupported Kwargs: %s", opt.k) unless SPECIAL_KWARGS.include?(opt.k.to_sym)
           extract_running_command_opt(opt)
         else # keyword argument
           @args << Argument.new(opt.k, opt.v)
@@ -200,9 +200,9 @@ module Rubsh
       args
     end
 
-    def spawn
+    def spawn(redirection_args: nil)
       cmd_args = compile_cmd_args
-      redirection_args = compile_redirection_args
+      redirection_args ||= compile_redirection_args
       extra_args = compile_extra_args
       @sh.logger.debug([@progpath].concat(cmd_args).join(" "))
 

@@ -6,8 +6,10 @@ module Rubsh
       Command.new(self, prog)
     end
 
-    def pipeline
-      RunningPipeline.new(self).tap { |x| yield x }
+    def pipeline(**kwarg)
+      r = RunningPipeline.new(self).tap { |x| yield x }
+      r.__run(**kwarg)
+      r
     end
 
     def logger
