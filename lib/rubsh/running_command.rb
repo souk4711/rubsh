@@ -12,8 +12,6 @@ module Rubsh
       _cwd
       _ok_code
       _in
-      _no_out
-      _no_err
       _long_sep
       _long_prefix
       _pipeline
@@ -51,10 +49,6 @@ module Rubsh
 
       # Special Kwargs - Communication
       @_in = nil
-
-      # Special Kwargs - Performance & Optimization
-      @_no_out = false
-      @_no_err = false
 
       # Special Kwargs - Program Arguments
       @_long_sep = "="
@@ -148,10 +142,6 @@ module Rubsh
         @_ok_code = [*opt.v]
       when :_in
         @_in = opt.v
-      when :_no_out
-        @_no_out = opt.v
-      when :_no_err
-        @_no_err = opt.v
       when :_long_sep
         @_long_sep = opt.v
       when :_long_prefix
@@ -176,16 +166,16 @@ module Rubsh
       end
 
       if @_out
-        args[@_err_to_out ? [:out, :err] : :out] = @_out if @_out
-      elsif !@_no_out
+        args[@_err_to_out ? [:out, :err] : :out] = @_out
+      else
         @out_rd, @out_wr = ::IO.pipe
         args[@_err_to_out ? [:out, :err] : :out] = @out_wr.fileno
       end
 
       unless @_err_to_out
         if @_err
-          args[:err] = @_err if @_err
-        elsif !@_no_err
+          args[:err] = @_err
+        else
           @err_rd, @err_wr = ::IO.pipe
           args[:err] = @err_wr.fileno
         end

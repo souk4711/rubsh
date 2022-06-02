@@ -42,6 +42,7 @@ rubsh relies on various Unix system calls and only works on Unix-like operating 
   * [Special Kwargs](#special-kwargs)
 * [Development](#development)
 * [Contributing](#contributing)
+* [Acknowledgements](#acknowledgements)
 * [License](#license)
 * [Code Of Conduct](#code-of-conduct)
 
@@ -225,12 +226,6 @@ p "...and 3 seconds later"
 * `_in`:
   * use: Specifies an argument for the process to use as its standard input.
   * default value: `nil`
-* `_no_out`:
-  * use: Disables STDOUT being internally stored. This is useful for commands that produce huge amounts of output that you don’t need, that would otherwise be hogging memory if stored internally by Rubsh.
-  * default value: `false`
-* `_no_err`:
-  * use: Disables STDERR being internally stored. This is useful for commands that produce huge amounts of output that you don’t need, that would otherwise be hogging memory if stored internally by Rubsh.
-  * default value: `false`
 * `_long_sep`:
   * use: This is the character(s) that separate a program’s long argument’s key from the value.
   * default value: `"="`
@@ -252,6 +247,11 @@ To install this gem onto your local machine, run `bundle exec rake install`. To 
 ## Contributing
 
 Bug reports and pull requests are welcome on GitHub at https://github.com/souk4711/rubsh. This project is intended to be a safe, welcoming space for collaboration, and contributors are expected to adhere to the [code of conduct](https://github.com/souk4711/rubsh/blob/main/CODE_OF_CONDUCT.md).
+
+
+## Acknowledgements
+
+* Special thanks to [python-sh].
 
 
 ## License

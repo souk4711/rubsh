@@ -145,20 +145,6 @@ RSpec.describe Rubsh::Command do
         end
       end
 
-      describe ":_no_out" do
-        it " disables STDOUT being internally stored." do
-          r = echo.call_with("out", _no_out: true)
-          expect(r.stdout_data).to eq("")
-        end
-      end
-
-      describe ":_no_err" do
-        it "disables STDERR being internally stored" do
-          r = echo.call_with("out", _no_err: true)
-          expect(r.stderr_data).to eq("")
-        end
-      end
-
       describe ":_long_sep" do
         it "specifies the character(s) that separate a program’s long argument’s key from the value" do
         end
