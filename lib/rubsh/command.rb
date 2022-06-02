@@ -28,7 +28,7 @@ module Rubsh
     private
 
     def resolve_progpath(prog)
-      if ::File.absolute_path?(prog)
+      if ::File.expand_path(prog) == prog
         if ::File.executable?(prog) && ::File.file?(prog)
           progpath = prog
         end

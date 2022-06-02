@@ -113,7 +113,7 @@ module Rubsh
       opts.each do |opt|
         if opt.positional? # positional argument
           @args << Argument.new(opt.k)
-        elsif opt.k.start_with?("_") # keyword argument - Special Kwargs
+        elsif opt.k.to_s[0] == "_" # keyword argument - Special Kwargs
           raise ::ArgumentError, format("Unsupported Kwargs: %s", opt.k) unless SPECIAL_KWARGS.include?(opt.k.to_sym)
           extract_running_command_opt(opt)
         else # keyword argument

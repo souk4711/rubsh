@@ -12,7 +12,7 @@ Gem::Specification.new do |spec|
   spec.description = "Rubsh (a.k.a. ruby-sh) - Inspired by python-sh, allows you to call any program as if it were a function."
   spec.homepage = "https://github.com/souk4711/rubsh"
   spec.license = "MIT"
-  spec.required_ruby_version = ">= 2.6.0"
+  spec.required_ruby_version = ">= 2.7.0"
 
   spec.metadata["homepage_uri"] = spec.homepage
   spec.metadata["source_code_uri"] = "https://github.com/souk4711/rubsh"

@@ -14,6 +14,12 @@ RSpec.describe Rubsh::Command do
   let(:echo) { described_class.new(sh, "echo") }
   let(:sleep) { described_class.new(sh, "sleep") }
 
+  it "supports use absolute path to set prog" do
+    expect {
+      described_class.new(sh, File.expand_path("../../bin/rubocop", __dir__))
+    }.to_not raise_error
+  end
+
   describe "#call_with" do
     it "returns a RunningCommand instance" do
       expect(ls.call_with).to be_a(Rubsh::RunningCommand)
@@ -103,7 +109,7 @@ RSpec.describe Rubsh::Command do
       describe ":_env" do
         it "by default, the calling process’s environment variables are used" do
           r = env.call_with
-          expect(r.stdout_data).to include("SHELL=")
+          expect(r.stdout_data).to include("HOME=")
         end
 
         it "with a dictionary, only defined environment variables is accessible" do
