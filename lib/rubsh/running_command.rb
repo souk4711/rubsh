@@ -28,14 +28,16 @@ module Rubsh
       @prog_with_args = nil
       @pid = nil
       @exit_code = nil
-      @stdout_data = nil
-      @stderr_data = nil
+      @stdout_data = "".force_encoding(::Encoding.default_external)
+      @stderr_data = "".force_encoding(::Encoding.default_external)
       @in_rd = nil
       @in_wr = nil
       @out_rd = nil
       @out_wr = nil
       @err_rd = nil
       @err_wr = nil
+      @out_rd_thr = nil
+      @err_rd_thr = nil
 
       # Special Kwargs - Controlling Output
       @_out = nil
@@ -85,15 +87,12 @@ module Rubsh
       end
 
       @exit_code = status&.exitstatus
-      @stdout_data = @out_rd&.read || ""
-      @stderr_data = @err_rd&.read || ""
       raise Exceptions::CommandTimeoutError if timeout_occurred
     rescue Errno::ECHILD, Errno::ESRCH
       raise Exceptions::CommandTimeoutError if timeout_occurred
     ensure
-      @in_wr&.close
-      @out_rd&.close
-      @err_rd&.close
+      @out_rd_thr&.join
+      @err_rd_thr&.join
     end
 
     # @!visibility private
@@ -213,10 +212,40 @@ module Rubsh
 
       @in_wr&.write(@_in_data) if @_in_data
       @in_wr&.close
+
+      @out_rd_thr = read_stream(@out_rd, proc { |chunk|
+        @stdout_data << chunk
+      }) if @out_rd
+      @err_rd_thr = read_stream(@err_rd, proc { |chunk|
+        @stderr_data << chunk
+      }) if @err_rd
     ensure
       @in_rd&.close
       @out_wr&.close
       @err_wr&.close
+    end
+
+    def read_stream(rd, block)
+      Thread.new do
+        if Thread.current.respond_to?(:report_on_exception)
+          Thread.current.report_on_exception = false
+        end
+
+        readers = [rd]
+        while readers.any?
+          ready = IO.select(readers, nil, readers)
+          ready[0].each do |reader|
+            begin
+              chunk = reader.readpartial(16 * 1024)
+              chunk.force_encoding(::Encoding.default_external)
+              block.call(chunk)
+            rescue EOFError, Errno::EPIPE, Errno::EIO
+              readers.delete(reader)
+              reader.close
+            end
+          end
+        end
+      end
     end
 
     def handle_return_code
