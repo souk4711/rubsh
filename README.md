@@ -170,6 +170,12 @@ s = sh.cmd("sleep").call_with(3, _bg: true)
 p "prints immediately!"
 s.wait()
 p "...and 3 seconds later"
+
+# Timeout
+s = sh.cmd("sleep").call_with(30, _bg: true)
+p "prints immediately!"
+s.wait(timeout: 3)
+p "...and 3 seconds later"
 ```
 
 ### Baking
@@ -251,10 +257,10 @@ r.stdout_data # => "12\n"
   * default value: `false`
 * `_out_bufsize`:
   * use: The STDOUT buffer size. nil for unbuffered, 0 for line buffered, anything else for a buffer of that amount.
-  * default value: 0
+  * default value: `0`
 * `_err_bufsize`:
   * use: The STDERR buffer size. nil for unbuffered, 0 for line buffered, anything else for a buffer of that amount.
-  * default value: 0
+  * default value: `0`
 * `_in`:
   * use: Specifies an argument for the process to use as its standard input.
   * default value: `nil`
