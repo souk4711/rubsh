@@ -13,13 +13,16 @@ module Rubsh
     def initialize(sh)
       @sh = sh
       @rcmds = []
-      @stdout_data = nil
+
+      # Runtime
+      @stdout_data = "".force_encoding(::Encoding.default_external)
       @in_rd = nil
       @in_wr = nil
       @out_rd = nil
       @out_wr = nil
       @pipes = []
 
+      # Special Kwargs
       @_out = nil
       @_in = nil
       @_in_data = nil
@@ -40,15 +43,16 @@ module Rubsh
         @in_rd&.close
         @out_wr&.close
 
-        # redirect from :in
+        # input
         @in_wr&.write(@_in_data) if @_in_data
         @in_wr&.close
 
         # wait
         ts.map(&:value)
 
-        # redirect to :out
-        @stdout_data = @out_rd&.read
+        # output
+        @stdout_data = @out_rd&.read || ""
+        @stdout_data.force_encoding(::Encoding.default_external)
         @out_rd&.close
       end
 
