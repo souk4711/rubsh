@@ -61,7 +61,7 @@ module Rubsh
       @_cwd = nil
       @_ok_code = [0]
 
-      # Performance & Optimization
+      # Special Kwargs - Performance & Optimization
       @_out_bufsize = 0
       @_err_bufsize = 0
       @_no_out = false
@@ -235,7 +235,7 @@ module Rubsh
 
     def spawn
       args = __spawn_arguments
-      @sh.logger.debug(@prog_with_args)
+      @sh.logger.info(@prog_with_args)
 
       @pid = ::Process.spawn(*args)
       @in_wr&.write(@_in_data) if @_in_data

@@ -10,7 +10,7 @@ module Rubsh
       _ok_code
     ]
 
-    attr_reader :stdout_data
+    attr_reader :exit_code, :stdout_data, :stderr_data
 
     def initialize(sh)
       @sh = sh
@@ -27,7 +27,6 @@ module Rubsh
       @out_wr = nil
       @err_rd = nil
       @err_wr = nil
-      @pipes = []
 
       # Special Kwargs - Controlling Input/Output
       @_in_data = nil
@@ -50,7 +49,7 @@ module Rubsh
 
       cmds = @rcmds.map { |r| r.__spawn_arguments(redirection_args: {}) }
       @prog_with_args = @rcmds.map(&:__prog_with_args).join(" | ")
-      @sh.logger.debug(@prog_with_args)
+      @sh.logger.info(@prog_with_args)
 
       Open3.pipeline_start(*cmds, compile_redirection_args) do |ts|
         # unused
