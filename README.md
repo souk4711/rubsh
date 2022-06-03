@@ -34,10 +34,11 @@ rubsh relies on various Unix system calls and only works on Unix-like operating 
   * [Passing Arguments](#passing-arguments)
   * [Exit Codes](#exit-codes)
   * [Redirection](#redirection)
-  * [Baking](#baking)
-  * [Piping](#piping)
-  * [Subcommands](#subcommands)
+  * [Incremental Iteration](#incremental-iteration)
   * [Background Processes](#background-processes)
+  * [Baking](#baking)
+  * [Subcommands](#subcommands)
+  * [Piping](#piping)
 * [Reference](#reference)
   * [Special Kwargs](#special-kwargs)
 * [Development](#development)
@@ -145,6 +146,32 @@ sh.cmd("cat").call_with(_in_data: "hello").stdout_data # => "hello"
 sh.cmd("cat").call_with(_in: "/some/existant/file")
 ```
 
+### Incremental Iteration
+
+```ruby
+# By default, output is line-buffered, so the body of the loop will only run
+# when your process produces a newline. You can change this by changing the
+# buffer size of the command’s output with `_out_bufsize`/`_err_bufsize`.
+tail = sh.cmd("tail")
+tail.call_with("-f", "/var/log/some_log_file.log") do |stdout, _stderr|
+  print stdout
+end
+```
+
+### Background Processes
+
+```ruby
+# Blocks
+sh.cmd("sleep").call_with(3)
+p "...3 seconds later"
+
+# Doesn't block
+s = sh.cmd("sleep").call_with(3, _bg: true)
+p "prints immediately!"
+s.wait()
+p "...and 3 seconds later"
+```
+
 ### Baking
 
 ```ruby
@@ -166,17 +193,6 @@ myserver.call_with('whoami')
 myserver.call_with('pwd')
 ```
 
-### Piping
-
-```ruby
-# Run a series of commands connected by `_pipeline`
-r = sh.pipeline do |pipeline|
-  sh.cmd("echo").call_with("hello world", _pipeline: pipeline)
-  sh.cmd("wc").call_with("-c", _pipeline: pipeline)
-end
-r.stdout_data # => "12\n"
-```
-
 ### Subcommands
 
 ```ruby
@@ -187,19 +203,16 @@ gst.call_with() # Resolves to "/usr/bin/git status"
 gst.call_with("-s") # Resolves to "/usr/bin/git status -s"
 ```
 
-### Background Processes
+### Piping
 
 ```ruby
-# Blocks
-sh.cmd("sleep").call_with(3)
-p "...3 seconds later"
+# Run a series of commands connected by `_pipeline`
+r = sh.pipeline do |pipeline|
+  sh.cmd("echo").call_with("hello world", _pipeline: pipeline)
+  sh.cmd("wc").call_with("-c", _pipeline: pipeline)
+end
+r.stdout_data # => "12\n"
 
-# Doesn't block
-s = sh.cmd("sleep").call_with(3, _bg: true)
-p "prints immediately!"
-s.wait()
-p "...and 3 seconds later"
-```
 
 ## Reference
 
@@ -235,6 +248,12 @@ p "...and 3 seconds later"
 * `_no_err`:
   * use: Disables STDERR being internally stored. This is useful for commands that produce huge amounts of output that you don’t need, that would otherwise be hogging memory if stored internally by rubsh.
   * default value: `false`
+* `_out_bufsize`:
+  * use: The STDOUT buffer size. nil for unbuffered, 0 for line buffered, anything else for a buffer of that amount.
+  * default value: 0
+* `_err_bufsize`:
+  * use: The STDERR buffer size. nil for unbuffered, 0 for line buffered, anything else for a buffer of that amount.
+  * default value: 0
 * `_in`:
   * use: Specifies an argument for the process to use as its standard input.
   * default value: `nil`

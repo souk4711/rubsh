@@ -2,6 +2,7 @@ require "timeout"
 
 module Rubsh
   class RunningCommand
+    BUFSIZE = 16 * 1024
     SPECIAL_KWARGS = %i[
       _out
       _err
@@ -11,6 +12,8 @@ module Rubsh
       _timeout
       _cwd
       _ok_code
+      _out_bufsize
+      _err_bufsize
       _no_out
       _no_err
       _in
@@ -22,11 +25,14 @@ module Rubsh
 
     attr_reader :pid, :exit_code, :stdout_data, :stderr_data
 
-    def initialize(sh, prog, progpath, *args, **kwargs)
+    def initialize(sh, prog, progpath, *args, **kwargs, &block)
       @sh = sh
       @prog = prog
       @progpath = progpath
       @args = []
+      @block = block
+
+      # Runtime
       @prog_with_args = nil
       @pid = nil
       @exit_code = nil
@@ -58,6 +64,8 @@ module Rubsh
       @_in_data = nil
 
       # Performance & Optimization
+      @_out_bufsize = 0
+      @_err_bufsize = 0
       @_no_out = false
       @_no_err = false
 
@@ -148,6 +156,10 @@ module Rubsh
         @_cwd = opt.v
       when :_ok_code
         @_ok_code = [*opt.v]
+      when :_out_bufsize
+        @_out_bufsize = opt.v
+      when :_err_bufsize
+        @_err_bufsize = opt.v
       when :_no_out
         @_no_out = opt.v
       when :_no_err
@@ -224,13 +236,15 @@ module Rubsh
       @in_wr&.close
 
       if @out_rd
-        @out_rd_thr = read_stream(@out_rd, proc { |chunk|
+        @out_rd_thr = read_stream(@out_rd, bufsize: @block ? @_out_bufsize : nil, &proc { |chunk|
           @stdout_data << chunk unless @_no_out
+          @block&.call(chunk, nil)
         })
       end
       if @err_rd
-        @err_rd_thr = read_stream(@err_rd, proc { |chunk|
+        @err_rd_thr = read_stream(@err_rd, bufsize: @block ? @_err_bufsize : nil, &proc { |chunk|
           @stderr_data << chunk unless @_no_err
+          @block&.call(nil, chunk)
         })
       end
     ensure
@@ -239,7 +253,7 @@ module Rubsh
       @err_wr&.close
     end
 
-    def read_stream(rd, block)
+    def read_stream(rd, bufsize: nil, &block)
       Thread.new do
         if Thread.current.respond_to?(:report_on_exception)
           Thread.current.report_on_exception = false
@@ -249,7 +263,15 @@ module Rubsh
         while readers.any?
           ready = IO.select(readers, nil, readers)
           ready[0].each do |reader|
-            chunk = reader.readpartial(16 * 1024)
+            if bufsize.nil?
+              chunk = reader.readpartial(BUFSIZE)
+            elsif bufsize == 0
+              chunk = reader.readline
+            else
+              chunk = reader.read(bufsize)
+              raise EOFError if chunk.nil?
+            end
+
             chunk.force_encoding(::Encoding.default_external)
             block.call(chunk)
           rescue EOFError, Errno::EPIPE, Errno::EIO

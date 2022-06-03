@@ -11,7 +11,7 @@ RSpec.describe Rubsh::Command do
   let(:cat) { described_class.new(sh, "cat") }
   let(:env) { described_class.new(sh, "env") }
   let(:pwd) { described_class.new(sh, "pwd") }
-  let(:echo) { described_class.new(sh, "echo") }
+  let(:echo) { described_class.new(sh, "echo").bake("-n") }
   let(:sleep) { described_class.new(sh, "sleep") }
 
   it "supports use absolute path to set prog" do
@@ -67,7 +67,7 @@ RSpec.describe Rubsh::Command do
           Dir::Tmpname.create("rubsh-") do |filename|
             r = echo.call_with("out", _out: filename)
             expect(r.stdout_data).to eq("")
-            expect(File.read(filename)).to eq("out\n")
+            expect(File.read(filename)).to eq("out")
           end
         end
       end
@@ -75,9 +75,9 @@ RSpec.describe Rubsh::Command do
       describe ":_err" do
         it "redirects to :_err " do
           Dir::Tmpname.create("rubsh-") do |filename|
-            r = rawsh.call_with("echo err >&2", _err: filename)
+            r = rawsh.call_with("echo -n err >&2", _err: filename)
             expect(r.stderr_data).to eq("")
-            expect(File.read(filename)).to eq("err\n")
+            expect(File.read(filename)).to eq("err")
           end
         end
       end
@@ -143,12 +143,48 @@ RSpec.describe Rubsh::Command do
         end
       end
 
+      describe ":_out_bufsize" do
+        it "line buffered" do
+          r = []
+          echo.call_with("out1\nout2\nout3") do |stdout, _|
+            r << stdout
+          end
+          expect(r).to eq(["out1\n", "out2\n", "out3"])
+        end
+
+        it "custom bufsize" do
+          r = []
+          echo.call_with("out1", _out_bufsize: 3) do |stdout, _|
+            r << stdout
+          end
+          expect(r).to eq(["out", "1"])
+        end
+      end
+
+      describe ":_err_bufsize" do
+        it "line buffered" do
+          r = []
+          echo.call_with("err1\nerr2\nerr3", _out: [:child, :err]) do |_, stderr|
+            r << stderr
+          end
+          expect(r).to eq(["err1\n", "err2\n", "err3"])
+        end
+
+        it "custom bufsize" do
+          r = []
+          echo.call_with("err1", _err_bufsize: 3, _out: [:child, :err]) do |_, stderr|
+            r << stderr
+          end
+          expect(r).to eq(["err", "1"])
+        end
+      end
+
       describe ":_no_out" do
         it "disables STDOUT being internally stored" do
-          r = rawsh.call_with("echo out")
-          expect(r.stdout_data).to eq("out\n")
+          r = echo.call_with("out")
+          expect(r.stdout_data).to eq("out")
 
-          r = rawsh.call_with("echo out", _no_out: true)
+          r = echo.call_with("out", _no_out: true)
           expect(r.stdout_data).to eq("")
         end
       end

@@ -7,8 +7,8 @@ module Rubsh
       @baked_opts = []
     end
 
-    def call_with(*args, **kwargs)
-      rcmd = RunningCommand.new(@sh, @prog, @progpath, *@baked_opts, *args, **kwargs)
+    def call_with(*args, **kwargs, &block)
+      rcmd = RunningCommand.new(@sh, @prog, @progpath, *@baked_opts, *args, **kwargs, &block)
       rcmd.__run
       rcmd
     end
