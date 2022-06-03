@@ -1,3 +1,5 @@
+require "open3"
+
 module Rubsh
   class RunningPipeline
     SPECIAL_KWARGS = %i[
@@ -31,8 +33,25 @@ module Rubsh
     # @!visibility private
     def __run(**kwargs)
       extract_opts(**kwargs)
-      spawn
-      wait
+
+      cmds = @rcmds.map { |r| r.__spawn_arguments(redirection_args: {}) }
+      Open3.pipeline_start(*cmds, compile_redirection_args) do |ts|
+        # unused
+        @in_rd&.close
+        @out_wr&.close
+
+        # redirect from :in
+        @in_wr&.write(@_in_data) if @_in_data
+        @in_wr&.close
+
+        # wait
+        ts.map(&:value)
+
+        # redirect to :out
+        @stdout_data = @out_rd&.read
+        @out_rd&.close
+      end
+
       self
     end
 
@@ -71,39 +90,6 @@ module Rubsh
       end
 
       args
-    end
-
-    def spawn
-      @pipes = (1...@rcmds.length).map { ::IO.pipe }
-      pipes_filenos = @pipes.map { |pipe| pipe.map(&:fileno) }
-
-      redirection_args = compile_redirection_args
-      @rcmds.each_with_index do |rcmd, idx|
-        previous_rd, _ = idx.zero? ? [redirection_args[:in], nil] : pipes_filenos[idx - 1]
-        _, wr = idx == @rcmds.length - 1 ? [nil, redirection_args[:out]] : pipes_filenos[idx]
-        rcmd.__run_in_pipeline(in: previous_rd, out: wr)
-      end
-
-      @in_wr&.write(@_in_data) if @_in_data
-      @in_wr&.close
-    ensure
-      @in_rd&.close
-      @out_wr&.close
-    end
-
-    def wait
-      @rcmds.each_with_index do |rcmd, idx|
-        rcmd.wait
-        previous_rd, _ = idx.zero? ? [nil, nil] : @pipes[idx - 1]
-        _, wr = idx == @rcmds.length - 1 ? [nil, nil] : @pipes[idx]
-        previous_rd&.close
-        wr&.close
-      end
-
-      @stdout_data = @out_rd&.read
-    ensure
-      @in_wr&.close
-      @out_rd&.close
     end
   end
 end

@@ -119,8 +119,21 @@ module Rubsh
     end
 
     # @!visibility private
-    def __run_in_pipeline(redirection_args)
-      spawn(redirection_args: redirection_args)
+    def __spawn_arguments(redirection_args: nil)
+      cmd_args = compile_cmd_args
+      redirection_args ||= compile_redirection_args
+      extra_args = compile_extra_args
+
+      # For logging
+      @prog_with_args = [@progpath].concat(cmd_args).join(" ")
+
+      # .
+      _args =
+        if @_env
+          [@_env, [@progpath, @prog], *cmd_args, **redirection_args, **extra_args, unsetenv_others: true]
+        else
+          [[@progpath, @prog], *cmd_args, **redirection_args, **extra_args]
+        end
     end
 
     private
@@ -217,21 +230,11 @@ module Rubsh
       args
     end
 
-    def spawn(redirection_args: nil)
-      cmd_args = compile_cmd_args
-      redirection_args ||= compile_redirection_args
-      extra_args = compile_extra_args
-
-      @prog_with_args = [@progpath].concat(cmd_args).join(" ")
+    def spawn
+      args = __spawn_arguments
       @sh.logger.debug(@prog_with_args)
 
-      @pid =
-        if @_env
-          ::Process.spawn(@_env, [@progpath, @prog], *cmd_args, **redirection_args, **extra_args, unsetenv_others: true)
-        else
-          ::Process.spawn([@progpath, @prog], *cmd_args, **redirection_args, **extra_args)
-        end
-
+      @pid = ::Process.spawn(*args)
       @in_wr&.write(@_in_data) if @_in_data
       @in_wr&.close
 
