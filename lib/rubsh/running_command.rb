@@ -134,6 +134,11 @@ module Rubsh
         end
     end
 
+    # @!visibility private
+    def __prog_with_args
+      @prog_with_args
+    end
+
     private
 
     def extract_opts(opts)
