@@ -3,9 +3,10 @@ require "open3"
 module Rubsh
   class RunningPipeline
     SPECIAL_KWARGS = %i[
-      _out
-      _in
       _in_data
+      _in
+      _out
+      _ok_code
     ]
 
     attr_reader :stdout_data
@@ -15,17 +16,23 @@ module Rubsh
       @rcmds = []
 
       # Runtime
+      @prog_with_args = nil
+      @exit_code = nil
       @stdout_data = "".force_encoding(::Encoding.default_external)
+      @stderr_data = "".force_encoding(::Encoding.default_external)
       @in_rd = nil
       @in_wr = nil
       @out_rd = nil
       @out_wr = nil
       @pipes = []
 
-      # Special Kwargs
-      @_out = nil
-      @_in = nil
+      # Special Kwargs - Controlling Input/Output
       @_in_data = nil
+      @_in = nil
+      @_out = nil
+
+      # Special Kwargs - Execution
+      @_ok_code = [0]
     end
 
     # @!visibility private
@@ -47,13 +54,20 @@ module Rubsh
         @in_wr&.write(@_in_data) if @_in_data
         @in_wr&.close
 
-        # wait
-        ts.map(&:value)
+        begin
+          # wait
+          last_status = ts.map(&:value)[-1]
+          @exit_code = last_status&.exitstatus
 
-        # output
-        @stdout_data = @out_rd&.read || ""
-        @stdout_data.force_encoding(::Encoding.default_external)
-        @out_rd&.close
+          # output
+          @stdout_data = @out_rd&.read || ""
+          @stdout_data.force_encoding(::Encoding.default_external)
+        ensure
+          @out_rd&.close
+        end
+
+        # .
+        handle_return_code
       end
 
       self
@@ -65,12 +79,14 @@ module Rubsh
       kwargs.each do |k, v|
         raise ::ArgumentError, format("Unsupported kwarg: %s", k) unless SPECIAL_KWARGS.include?(k.to_sym)
         case k.to_sym
-        when :_out
-          @_out = v
-        when :_in
-          @_in = v
         when :_in_data
           @_in_data = v
+        when :_in
+          @_in = v
+        when :_out
+          @_out = v
+        when :_ok_code
+          @_ok_code = [*v]
         end
       end
     end
@@ -94,6 +110,13 @@ module Rubsh
       end
 
       args
+    end
+
+    def handle_return_code
+      return if @_ok_code.include?(@exit_code)
+
+      message = format("\n\n  RAN: %s\n\n  STDOUT:\n%s\n  STDERR:\n%s\n", @prog_with_args, @stdout_data, @stderr_data)
+      raise Exceptions::CommandReturnFailureError.new(@exit_code, message)
     end
   end
 end

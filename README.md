@@ -225,6 +225,12 @@ r.stdout_data # => "12\n"
 
 ### Special Kwargs
 
+* `_in_data`:
+  * use: Specifies an argument for the process to use as its standard input data.
+  * default value: `nil`
+* `_in`:
+  * use: Specifies an argument for the process to use as its standard input.
+  * default value: `nil`
 * `_out`:
   * use: Where to redirect STDOUT to.
   * default value: `nil`
@@ -261,12 +267,6 @@ r.stdout_data # => "12\n"
 * `_err_bufsize`:
   * use: The STDERR buffer size. nil for unbuffered, 0 for line buffered, anything else for a buffer of that amount.
   * default value: `0`
-* `_in`:
-  * use: Specifies an argument for the process to use as its standard input.
-  * default value: `nil`
-* `_in_data`:
-  * use: Specifies an argument for the process to use as its standard input data.
-  * default value: `nil`
 * `_long_sep`:
   * use: This is the character(s) that separate a program’s long argument’s key from the value.
   * default value: `"="`

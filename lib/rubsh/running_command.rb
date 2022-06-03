@@ -4,6 +4,8 @@ module Rubsh
   class RunningCommand
     BUFSIZE = 16 * 1024
     SPECIAL_KWARGS = %i[
+      _in_data
+      _in
       _out
       _err
       _err_to_out
@@ -16,8 +18,6 @@ module Rubsh
       _err_bufsize
       _no_out
       _no_err
-      _in
-      _in_data
       _long_sep
       _long_prefix
       _pipeline
@@ -47,7 +47,9 @@ module Rubsh
       @out_rd_thr = nil
       @err_rd_thr = nil
 
-      # Special Kwargs - Controlling Output
+      # Special Kwargs - Controlling Input/Output
+      @_in_data = nil
+      @_in = nil
       @_out = nil
       @_err = nil
       @_err_to_out = false
@@ -58,10 +60,6 @@ module Rubsh
       @_timeout = nil
       @_cwd = nil
       @_ok_code = [0]
-
-      # Special Kwargs - Communication
-      @_in = nil
-      @_in_data = nil
 
       # Performance & Optimization
       @_out_bufsize = 0
@@ -153,6 +151,10 @@ module Rubsh
 
     def extract_running_command_opt(opt)
       case opt.k.to_sym
+      when :_in_data
+        @_in_data = opt.v
+      when :_in
+        @_in = opt.v
       when :_out
         @_out = opt.v
       when :_err
@@ -177,10 +179,6 @@ module Rubsh
         @_no_out = opt.v
       when :_no_err
         @_no_err = opt.v
-      when :_in
-        @_in = opt.v
-      when :_in_data
-        @_in_data = opt.v
       when :_long_sep
         @_long_sep = opt.v
       when :_long_prefix
