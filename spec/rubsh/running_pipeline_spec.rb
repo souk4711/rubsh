@@ -12,12 +12,11 @@ RSpec.describe Rubsh::RunningPipeline do
     describe "special kwargs" do
       describe ":_in" do
         it "specifies an argument for the process to use as its standard input" do
-          f = File.join(__dir__, "command_spec.rb")
-          r = sh.pipeline(_in: f) do |pipeline|
-            cat.call_with(f, _pipeline: pipeline)
+          r = sh.pipeline(_in: __FILE__) do |pipeline|
+            cat.call_with(__FILE__, _pipeline: pipeline)
             less.call_with(_pipeline: pipeline)
           end
-          expect(r.stdout_data).to eq(File.read(f))
+          expect(r.stdout_data).to eq(File.read(__FILE__))
         end
       end
 

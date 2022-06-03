@@ -1,6 +1,12 @@
 module Rubsh
   class Shell
+    attr_reader :path
     attr_writer :logger
+
+    def initialize
+      @logger = nil
+      @path = ::ENV["PATH"].split(::File::PATH_SEPARATOR)
+    end
 
     def cmd(prog)
       Command.new(self, prog)
@@ -10,6 +16,10 @@ module Rubsh
       r = RunningPipeline.new(self).tap { |x| yield x }
       r.__run(**kwarg)
       r
+    end
+
+    def path=(path)
+      @path = [*path]
     end
 
     def logger

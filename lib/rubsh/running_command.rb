@@ -97,7 +97,7 @@ module Rubsh
             sleep 0.1
           end
           failure = @pid if status.nil?
-          failure && ::Process.kill("KILL", failure)
+          failure && ::Process.kill("KILL", failure) # forceful stop
         end
       else
         _, status = ::Process.wait2(@pid)

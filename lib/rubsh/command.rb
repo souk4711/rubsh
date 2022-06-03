@@ -2,7 +2,7 @@ module Rubsh
   class Command
     def initialize(sh, prog)
       @sh = sh
-      @prog = prog
+      @prog = prog.to_s
       @progpath = resolve_progpath(@prog)
       @baked_opts = []
     end
@@ -34,7 +34,7 @@ module Rubsh
           progpath = prog
         end
       else
-        ::ENV["PATH"].split(::File::PATH_SEPARATOR).each do |path|
+        @sh.path.each do |path|
           filepath = ::File.join(path, prog)
           if ::File.executable?(filepath) && ::File.file?(filepath)
             progpath = filepath

@@ -23,7 +23,12 @@ wlan0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
 
 Note that these aren't Ruby functions, these are running the binary commands on your system by dynamically resolving your $PATH, much like Bash does, and then wrapping the binary in a function. In this way, all the programs on your system are easily available to you from within Ruby.
 
-rubsh relies on various Unix system calls and only works on Unix-like operating systems - Linux, macOS, BSDs etc. Specifically, Windows is not supported.
+When using this library you can:
+
+* Call any program as if it were a function.
+* Get an exception when exit code is not 0.
+* Force terminate the process if it does not finish within the timeout.
+* etc.
 
 
 ## Table of Contents

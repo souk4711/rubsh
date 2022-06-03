@@ -16,7 +16,7 @@ RSpec.describe Rubsh::Command do
 
   it "supports use absolute path to set prog" do
     expect {
-      described_class.new(sh, File.expand_path("../../bin/rubocop", __dir__))
+      described_class.new(sh, RSPEC_ROOT.join("fixtures/bin/rubsh-83aciz.sh"))
     }.to_not raise_error
   end
 
@@ -201,9 +201,8 @@ RSpec.describe Rubsh::Command do
 
       describe ":_in" do
         it "specifies an argument for the process to use as its standard input" do
-          f = File.join(__dir__, "command_spec.rb")
-          r = cat.call_with(_in: f)
-          expect(r.stdout_data).to eq(File.read(f))
+          r = cat.call_with(_in: __FILE__)
+          expect(r.stdout_data).to eq(File.read(__FILE__))
         end
       end
 
