@@ -11,6 +11,8 @@ module Rubsh
       _timeout
       _cwd
       _ok_code
+      _no_out
+      _no_err
       _in
       _in_data
       _long_sep
@@ -54,6 +56,10 @@ module Rubsh
       # Special Kwargs - Communication
       @_in = nil
       @_in_data = nil
+
+      # Performance & Optimization
+      @_no_out = false
+      @_no_err = false
 
       # Special Kwargs - Program Arguments
       @_long_sep = "="
@@ -142,6 +148,10 @@ module Rubsh
         @_cwd = opt.v
       when :_ok_code
         @_ok_code = [*opt.v]
+      when :_no_out
+        @_no_out = opt.v
+      when :_no_err
+        @_no_err = opt.v
       when :_in
         @_in = opt.v
       when :_in_data
@@ -213,12 +223,16 @@ module Rubsh
       @in_wr&.write(@_in_data) if @_in_data
       @in_wr&.close
 
-      @out_rd_thr = read_stream(@out_rd, proc { |chunk|
-        @stdout_data << chunk
-      }) if @out_rd
-      @err_rd_thr = read_stream(@err_rd, proc { |chunk|
-        @stderr_data << chunk
-      }) if @err_rd
+      if @out_rd
+        @out_rd_thr = read_stream(@out_rd, proc { |chunk|
+          @stdout_data << chunk unless @_no_out
+        })
+      end
+      if @err_rd
+        @err_rd_thr = read_stream(@err_rd, proc { |chunk|
+          @stderr_data << chunk unless @_no_err
+        })
+      end
     ensure
       @in_rd&.close
       @out_wr&.close
@@ -235,14 +249,12 @@ module Rubsh
         while readers.any?
           ready = IO.select(readers, nil, readers)
           ready[0].each do |reader|
-            begin
-              chunk = reader.readpartial(16 * 1024)
-              chunk.force_encoding(::Encoding.default_external)
-              block.call(chunk)
-            rescue EOFError, Errno::EPIPE, Errno::EIO
-              readers.delete(reader)
-              reader.close
-            end
+            chunk = reader.readpartial(16 * 1024)
+            chunk.force_encoding(::Encoding.default_external)
+            block.call(chunk)
+          rescue EOFError, Errno::EPIPE, Errno::EIO
+            readers.delete(reader)
+            reader.close
           end
         end
       end

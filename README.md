@@ -229,6 +229,12 @@ p "...and 3 seconds later"
 * `_ok_code`:
   * use: Some misbehaved programs use exit codes other than 0 to indicate success. Set to treats as success.
   * default value: `[0]`
+* `_no_out`:
+  * use: Disables STDOUT being internally stored. This is useful for commands that produce huge amounts of output that you don’t need, that would otherwise be hogging memory if stored internally by rubsh.
+  * default value: `false`
+* `_no_err`:
+  * use: Disables STDERR being internally stored. This is useful for commands that produce huge amounts of output that you don’t need, that would otherwise be hogging memory if stored internally by rubsh.
+  * default value: `false`
 * `_in`:
   * use: Specifies an argument for the process to use as its standard input.
   * default value: `nil`

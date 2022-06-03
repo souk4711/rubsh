@@ -143,6 +143,26 @@ RSpec.describe Rubsh::Command do
         end
       end
 
+      describe ":_no_out" do
+        it "disables STDOUT being internally stored" do
+          r = rawsh.call_with("echo out")
+          expect(r.stdout_data).to eq("out\n")
+
+          r = rawsh.call_with("echo out", _no_out: true)
+          expect(r.stdout_data).to eq("")
+        end
+      end
+
+      describe ":_no_err" do
+        it "disables STDERR being internally stored" do
+          r = rawsh.call_with("echo err >&2")
+          expect(r.stderr_data).to eq("err\n")
+
+          r = rawsh.call_with("echo err >&2", _no_err: true)
+          expect(r.stderr_data).to eq("")
+        end
+      end
+
       describe ":_in" do
         it "specifies an argument for the process to use as its standard input" do
           f = File.join(__dir__, "command_spec.rb")
