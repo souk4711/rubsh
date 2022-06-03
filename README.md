@@ -242,7 +242,7 @@ r.stdout_data # => "11\n"
   * use: If true, duplicate the file descriptor bound to the process’s STDOUT also to STDERR.
   * default value: `false`
 * `_capture`:
-  * use:
+  * use: Iterates over STDOUT/STDERR.
   * default value: nil
 * `_bg`:
   * use: Runs a command in the background. The command will return immediately, and you will have to run RunningCommand#wait on it to ensure it terminates.

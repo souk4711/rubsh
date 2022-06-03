@@ -68,11 +68,21 @@ RSpec.describe Rubsh::RunningPipeline do
 
       describe ":_out_bufsize" do
         it "line buffered" do
+          r = []
+          sh.pipeline(_capture: ->(stdout, _) { r << stdout }) do |pipeline|
+            echo.call_with("out1\nout2\nout3", _pipeline: pipeline)
+          end
+          expect(r).to eq(["out1\n", "out2\n", "out3"])
         end
       end
 
       describe ":_err_bufsize" do
         it "line buffered" do
+          r = []
+          sh.pipeline(_out: [:child, :err], _capture: ->(_, stderr) { r << stderr }) do |pipeline|
+            echo.call_with("err1\nerr2\nerr3", _pipeline: pipeline)
+          end
+          expect(r).to eq(["err1\n", "err2\n", "err3"])
         end
       end
 
