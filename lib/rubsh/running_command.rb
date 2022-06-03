@@ -2,7 +2,6 @@ require "timeout"
 
 module Rubsh
   class RunningCommand
-    BUFSIZE = 16 * 1024
     SPECIAL_KWARGS = %i[
       _in_data
       _in
@@ -44,8 +43,8 @@ module Rubsh
       @out_wr = nil
       @err_rd = nil
       @err_wr = nil
-      @out_rd_thr = nil
-      @err_rd_thr = nil
+      @out_rd_reader = nil
+      @err_rd_reader = nil
 
       # Special Kwargs - Controlling Input/Output
       @_in_data = nil
@@ -103,8 +102,8 @@ module Rubsh
     rescue Errno::ECHILD, Errno::ESRCH
       raise Exceptions::CommandTimeoutError if timeout_occurred
     ensure
-      @out_rd_thr&.join
-      @err_rd_thr&.join
+      @out_rd_reader&.wait
+      @err_rd_reader&.wait
     end
 
     # @!visibility private
@@ -242,13 +241,13 @@ module Rubsh
       @in_wr&.close
 
       if @out_rd
-        @out_rd_thr = read_stream(@out_rd, bufsize: @block ? @_out_bufsize : nil, &proc { |chunk|
+        @out_rd_reader = StreamReader.new(@out_rd, bufsize: @block ? @_out_bufsize : nil, &proc { |chunk|
           @stdout_data << chunk unless @_no_out
           @block&.call(chunk, nil)
         })
       end
       if @err_rd
-        @err_rd_thr = read_stream(@err_rd, bufsize: @block ? @_err_bufsize : nil, &proc { |chunk|
+        @err_rd_reader = StreamReader.new(@err_rd, bufsize: @block ? @_err_bufsize : nil, &proc { |chunk|
           @stderr_data << chunk unless @_no_err
           @block&.call(nil, chunk)
         })
@@ -257,35 +256,6 @@ module Rubsh
       @in_rd&.close
       @out_wr&.close
       @err_wr&.close
-    end
-
-    def read_stream(rd, bufsize: nil, &block)
-      Thread.new do
-        if Thread.current.respond_to?(:report_on_exception)
-          Thread.current.report_on_exception = false
-        end
-
-        readers = [rd]
-        while readers.any?
-          ready = IO.select(readers, nil, readers)
-          ready[0].each do |reader|
-            if bufsize.nil?
-              chunk = reader.readpartial(BUFSIZE)
-            elsif bufsize == 0
-              chunk = reader.readline
-            else
-              chunk = reader.read(bufsize)
-              raise EOFError if chunk.nil?
-            end
-
-            chunk.force_encoding(::Encoding.default_external)
-            block.call(chunk)
-          rescue EOFError, Errno::EPIPE, Errno::EIO
-            readers.delete(reader)
-            reader.close
-          end
-        end
-      end
     end
 
     def handle_return_code

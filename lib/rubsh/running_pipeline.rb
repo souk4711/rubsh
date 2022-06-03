@@ -8,13 +8,18 @@ module Rubsh
       _out
       _err
       _ok_code
+      _out_bufsize
+      _err_bufsize
+      _no_out
+      _no_err
     ]
 
     attr_reader :exit_code, :stdout_data, :stderr_data
 
-    def initialize(sh)
+    def initialize(sh, &block)
       @sh = sh
       @rcmds = []
+      @block = block
 
       # Runtime
       @prog_with_args = nil
@@ -27,6 +32,8 @@ module Rubsh
       @out_wr = nil
       @err_rd = nil
       @err_wr = nil
+      @out_rd_reader = nil
+      @err_rd_reader = nil
 
       # Special Kwargs - Controlling Input/Output
       @_in_data = nil
@@ -36,6 +43,12 @@ module Rubsh
 
       # Special Kwargs - Execution
       @_ok_code = [0]
+
+      # Special Kwargs - Performance & Optimization
+      @_out_bufsize = 0
+      @_err_bufsize = 0
+      @_no_out = false
+      @_no_err = false
     end
 
     # @!visibility private
@@ -61,22 +74,27 @@ module Rubsh
         @in_wr&.write(@_in_data) if @_in_data
         @in_wr&.close
 
-        begin
-          # wait
-          last_status = ts.map(&:value)[-1]
-          @exit_code = last_status&.exitstatus
-
-          # output & errput
-          @stdout_data = @out_rd&.read || ""
-          @stdout_data.force_encoding(::Encoding.default_external)
-          @stderr_data = @err_rd&.read || ""
-          @stderr_data.force_encoding(::Encoding.default_external)
-        ensure
-          @out_rd&.close
-          @err_rd&.close
+        # capture output/errput
+        if @out_rd
+          @out_rd_reader = StreamReader.new(@out_rd, bufsize: @block ? @_out_bufsize : nil, &proc { |chunk|
+            @stdout_data << chunk unless @_no_out
+            @block&.call(chunk, nil)
+          })
+        end
+        if @err_rd
+          @err_rd_reader = StreamReader.new(@err_rd, bufsize: @block ? @_err_bufsize : nil, &proc { |chunk|
+            @stderr_data << chunk unless @_no_err
+            @block&.call(nil, chunk)
+          })
         end
 
+        # wait
+        last_status = ts.map(&:value)[-1]
+        @out_rd_reader&.wait
+        @err_rd_reader&.wait
+
         # .
+        @exit_code = last_status&.exitstatus
         handle_return_code
       end
 
@@ -99,6 +117,14 @@ module Rubsh
           @_err = v
         when :_ok_code
           @_ok_code = [*v]
+        when :_out_bufsize
+          @_out_bufsize = opt.v
+        when :_err_bufsize
+          @_err_bufsize = opt.v
+        when :_no_out
+          @_no_out = opt.v
+        when :_no_err
+          @_no_err = opt.v
         end
       end
     end
