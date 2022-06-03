@@ -65,6 +65,44 @@ RSpec.describe Rubsh::RunningPipeline do
           expect(r.exit_code).to eq(2)
         end
       end
+
+      describe ":_out_bufsize" do
+        it "line buffered" do
+        end
+      end
+
+      describe ":_err_bufsize" do
+        it "line buffered" do
+        end
+      end
+
+      describe ":_no_out" do
+        it "disables STDOUT being internally stored" do
+          r = sh.pipeline do |pipeline|
+            echo.call_with("out", _pipeline: pipeline)
+          end
+          expect(r.stdout_data).to eq("out")
+
+          r = sh.pipeline(_no_out: true) do |pipeline|
+            echo.call_with("out", _pipeline: pipeline)
+          end
+          expect(r.stdout_data).to eq("")
+        end
+      end
+
+      describe ":_no_err" do
+        it "disables STDERR being internally stored" do
+          r = sh.pipeline do |pipeline|
+            rawsh.call_with("echo err >&2", _pipeline: pipeline)
+          end
+          expect(r.stderr_data).to eq("err\n")
+
+          r = sh.pipeline(_no_err: true) do |pipeline|
+            rawsh.call_with("echo err >&2", _pipeline: pipeline)
+          end
+          expect(r.stderr_data).to eq("")
+        end
+      end
     end
 
     describe "exceptions" do

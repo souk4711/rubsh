@@ -40,7 +40,8 @@ rubsh relies on various Unix system calls and only works on Unix-like operating 
   * [Subcommands](#subcommands)
   * [Piping](#piping)
 * [Reference](#reference)
-  * [Special Kwargs](#special-kwargs)
+  * [Command Special Kwargs](#command-special-kwargs)
+  * [Pipeline Special Kwargs](#pipeline-special-kwargs)
 * [Development](#development)
 * [Contributing](#contributing)
 * [Acknowledgements](#acknowledgements)
@@ -223,7 +224,7 @@ r.stdout_data # => "12\n"
 
 ## Reference
 
-### Special Kwargs
+### Command Special Kwargs
 
 * `_in_data`:
   * use: Specifies an argument for the process to use as its standard input data.
@@ -276,6 +277,18 @@ r.stdout_data # => "12\n"
 * `_pipeline`:
   * use: Specifies the :pipeline.
   * default value: `nil`
+
+### Pipeline Special Kwargs
+
+* `_in_data`
+* `_in`
+* `_out`
+* `_err`
+* `_ok_code`
+* `_no_out`
+* `_no_err`
+* `_out_bufsize`
+* `_err_bufsize`
 
 
 ## Development

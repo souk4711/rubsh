@@ -118,13 +118,13 @@ module Rubsh
         when :_ok_code
           @_ok_code = [*v]
         when :_out_bufsize
-          @_out_bufsize = opt.v
+          @_out_bufsize = v
         when :_err_bufsize
-          @_err_bufsize = opt.v
+          @_err_bufsize = v
         when :_no_out
-          @_no_out = opt.v
+          @_no_out = v
         when :_no_err
-          @_no_err = opt.v
+          @_no_err = v
         end
       end
     end
