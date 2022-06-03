@@ -8,6 +8,7 @@ module Rubsh
       _out
       _err
       _capture
+      _timeout
       _ok_code
       _out_bufsize
       _err_bufsize
@@ -43,6 +44,7 @@ module Rubsh
       @_capture = nil
 
       # Special Kwargs - Execution
+      @_timeout = nil
       @_ok_code = [0]
 
       # Special Kwargs - Performance & Optimization
@@ -65,7 +67,7 @@ module Rubsh
       @prog_with_args = @rcmds.map(&:__prog_with_args).join(" | ")
       @sh.logger.info(@prog_with_args)
 
-      Open3.pipeline_start(*cmds, compile_redirection_args) do |ts|
+      Open3.pipeline_start(*cmds, compile_redirection_args) do |waiters|
         # unused
         @in_rd&.close
         @out_wr&.close
@@ -90,16 +92,50 @@ module Rubsh
         end
 
         # wait
-        last_status = ts.map(&:value)[-1]
-        @out_rd_reader&.wait
-        @err_rd_reader&.wait
-
-        # .
-        @exit_code = last_status&.exitstatus
+        __wait(waiters, timeout: @_timeout)
         handle_return_code
       end
 
       self
+    end
+
+    # @!visibility private
+    def __wait(waiters, timeout: nil)
+      timeout_occurred = false
+      last_status = nil
+
+      if timeout
+        begin
+          ::Timeout.timeout(timeout) { last_status = waiters.map(&:value)[-1] }
+        rescue ::Timeout::Error
+          timeout_occurred = true
+
+          failures = []
+          waiters.each { |w| ::Process.kill("TERM", w.pid) } # graceful stop
+          waiters.each { |w|
+            _, status = nil, nil
+            30.times do
+              _, status = ::Process.wait2(w.pid, ::Process::WNOHANG | ::Process::WUNTRACED)
+              break if status
+              sleep 0.1
+            rescue Errno::ECHILD, Errno::ESRCH
+              status = true
+            end
+            failures << w.pid if status.nil?
+          }
+          failures.each { |pid| ::Process.kill("KILL", pid) } # forceful stop
+        end
+      else
+        last_status = waiters.map(&:value)[-1]
+      end
+
+      @exit_code = last_status&.exitstatus
+      raise Exceptions::CommandTimeoutError if timeout_occurred
+    rescue Errno::ECHILD, Errno::ESRCH
+      raise Exceptions::CommandTimeoutError if timeout_occurred
+    ensure
+      @out_rd_reader&.wait
+      @err_rd_reader&.wait
     end
 
     private
@@ -118,6 +154,8 @@ module Rubsh
           @_err = v
         when :_capture
           @_capture = v
+        when :_timeout
+          @_timeout = v
         when :_ok_code
           @_ok_code = [*v]
         when :_out_bufsize

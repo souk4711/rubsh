@@ -6,6 +6,7 @@ RSpec.describe Rubsh::RunningPipeline do
   let(:cat) { sh.cmd("cat") }
   let(:echo) { sh.cmd("echo").bake("-n") }
   let(:less) { sh.cmd("less") }
+  let(:sleep) { sh.cmd("sleep") }
 
   describe "#call_with" do
     describe "special kwargs" do
@@ -130,6 +131,14 @@ RSpec.describe Rubsh::RunningPipeline do
             ls.call_with("/some/non-existant/folder", _pipeline: pipeline)
           end
         }.to raise_error(Rubsh::Exceptions::CommandReturnFailureError)
+      end
+
+      it "raises a CommandTimeoutError error when command execute timeout" do
+        expect {
+          sh.pipeline(_timeout: 1) do |pipeline|
+            sleep.call_with(4, _pipeline: pipeline)
+          end
+        }.to raise_error(Rubsh::Exceptions::CommandTimeoutError)
       end
     end
   end

@@ -81,18 +81,23 @@ module Rubsh
     end
 
     def wait(timeout: nil)
+      timeout_occurred = false
       _, status = nil, nil
+
       if timeout
         begin
           ::Timeout.timeout(timeout) { _, status = ::Process.wait2(@pid) }
         rescue ::Timeout::Error
           timeout_occurred = true
+
           ::Process.kill("TERM", @pid) # graceful stop
           30.times do
             _, status = ::Process.wait2(@pid, ::Process::WNOHANG | ::Process::WUNTRACED)
-            sleep 0.1 if status.nil?
+            break if status
+            sleep 0.1
           end
-          ::Process.kill("KILL", @pid) # forceful stop
+          failure = @pid if status.nil?
+          failure && ::Process.kill("KILL", failure)
         end
       else
         _, status = ::Process.wait2(@pid)
