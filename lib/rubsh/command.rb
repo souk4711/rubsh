@@ -12,6 +12,7 @@ module Rubsh
       rcmd.__run
       rcmd
     end
+    alias_method :call, :call_with
 
     def bake(*args, **kwargs)
       cmd = Command.new(@sh, @prog)

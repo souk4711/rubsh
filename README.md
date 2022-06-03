@@ -76,7 +76,7 @@ sh = Rubsh::Shell.new
 # Create a command
 cmd = sh.cmd("ls")
 
-# Invoke a command
+# Invoke a command, use `call_with`/`call`
 result = cmd.call_with("-la")
 
 # Print result
