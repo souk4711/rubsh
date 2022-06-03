@@ -212,6 +212,7 @@ r = sh.pipeline do |pipeline|
   sh.cmd("wc").call_with("-c", _pipeline: pipeline)
 end
 r.stdout_data # => "12\n"
+```
 
 
 ## Reference
