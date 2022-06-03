@@ -146,17 +146,17 @@ RSpec.describe Rubsh::Command do
       describe ":_out_bufsize" do
         it "line buffered" do
           r = []
-          echo.call_with("out1\nout2\nout3") do |stdout, _|
+          echo.call_with("out1\nout2\nout3", _capture: ->(stdout, _) {
             r << stdout
-          end
+          })
           expect(r).to eq(["out1\n", "out2\n", "out3"])
         end
 
         it "custom bufsize" do
           r = []
-          echo.call_with("out1", _out_bufsize: 3) do |stdout, _|
+          echo.call_with("out1", _out_bufsize: 3, _capture: ->(stdout, _) {
             r << stdout
-          end
+          })
           expect(r).to eq(["out", "1"])
         end
       end
@@ -164,17 +164,17 @@ RSpec.describe Rubsh::Command do
       describe ":_err_bufsize" do
         it "line buffered" do
           r = []
-          echo.call_with("err1\nerr2\nerr3", _out: [:child, :err]) do |_, stderr|
+          echo.call_with("err1\nerr2\nerr3", _out: [:child, :err], _capture: ->(_, stderr) {
             r << stderr
-          end
+          })
           expect(r).to eq(["err1\n", "err2\n", "err3"])
         end
 
         it "custom bufsize" do
           r = []
-          echo.call_with("err1", _err_bufsize: 3, _out: [:child, :err]) do |_, stderr|
+          echo.call_with("err1", _err_bufsize: 3, _out: [:child, :err], _capture: ->(_, stderr) {
             r << stderr
-          end
+          })
           expect(r).to eq(["err", "1"])
         end
       end

@@ -154,9 +154,9 @@ sh.cmd("cat").call_with(_in: "/some/existant/file")
 # when your process produces a newline. You can change this by changing the
 # buffer size of the command’s output with `_out_bufsize`/`_err_bufsize`.
 tail = sh.cmd("tail")
-tail.call_with("-f", "/var/log/some_log_file.log") do |stdout, _stderr|
+tail.call_with("-f", "/var/log/some_log_file.log", _capture: ->(stdout, _stderr) {
   print stdout
-end
+})
 ```
 
 ### Background Processes
@@ -214,11 +214,11 @@ gst.call_with("-s") # Resolves to "/usr/bin/git status -s"
 
 ```ruby
 # Run a series of commands connected by `_pipeline`
-r = sh.pipeline do |pipeline|
-  sh.cmd("echo").call_with("hello world", _pipeline: pipeline)
+r = sh.pipeline(_in_data: "hello world") do |pipeline|
+  sh.cmd("cat").call_with(_pipeline: pipeline)
   sh.cmd("wc").call_with("-c", _pipeline: pipeline)
 end
-r.stdout_data # => "12\n"
+r.stdout_data # => "11\n"
 ```
 
 
@@ -241,6 +241,9 @@ r.stdout_data # => "12\n"
 * `_err_to_out`:
   * use: If true, duplicate the file descriptor bound to the process’s STDOUT also to STDERR.
   * default value: `false`
+* `_capture`:
+  * use:
+  * default value: nil
 * `_bg`:
   * use: Runs a command in the background. The command will return immediately, and you will have to run RunningCommand#wait on it to ensure it terminates.
   * default value: `false`
@@ -284,6 +287,7 @@ r.stdout_data # => "12\n"
 * `_in`
 * `_out`
 * `_err`
+* `_capture`
 * `_ok_code`
 * `_no_out`
 * `_no_err`

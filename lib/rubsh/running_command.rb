@@ -8,6 +8,7 @@ module Rubsh
       _out
       _err
       _err_to_out
+      _capture
       _bg
       _env
       _timeout
@@ -24,12 +25,11 @@ module Rubsh
 
     attr_reader :pid, :exit_code, :stdout_data, :stderr_data
 
-    def initialize(sh, prog, progpath, *args, **kwargs, &block)
+    def initialize(sh, prog, progpath, *args, **kwargs)
       @sh = sh
       @prog = prog
       @progpath = progpath
       @args = []
-      @block = block
 
       # Runtime
       @prog_with_args = nil
@@ -52,6 +52,7 @@ module Rubsh
       @_out = nil
       @_err = nil
       @_err_to_out = false
+      @_capture = nil
 
       # Special Kwargs - Execution
       @_bg = false
@@ -165,6 +166,8 @@ module Rubsh
         @_err = opt.v
       when :_err_to_out
         @_err_to_out = opt.v
+      when :_capture
+        @_capture = opt.v
       when :_bg
         @_bg = opt.v
       when :_env
@@ -241,15 +244,15 @@ module Rubsh
       @in_wr&.close
 
       if @out_rd
-        @out_rd_reader = StreamReader.new(@out_rd, bufsize: @block ? @_out_bufsize : nil, &proc { |chunk|
+        @out_rd_reader = StreamReader.new(@out_rd, bufsize: @_capture ? @_out_bufsize : nil, &proc { |chunk|
           @stdout_data << chunk unless @_no_out
-          @block&.call(chunk, nil)
+          @_capture&.call(chunk, nil)
         })
       end
       if @err_rd
-        @err_rd_reader = StreamReader.new(@err_rd, bufsize: @block ? @_err_bufsize : nil, &proc { |chunk|
+        @err_rd_reader = StreamReader.new(@err_rd, bufsize: @_capture ? @_err_bufsize : nil, &proc { |chunk|
           @stderr_data << chunk unless @_no_err
-          @block&.call(nil, chunk)
+          @_capture&.call(nil, chunk)
         })
       end
     ensure
