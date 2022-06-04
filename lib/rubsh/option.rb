@@ -20,5 +20,17 @@ module Rubsh
     def positional?
       @is_positional
     end
+
+    def kwarg?
+      !positional?
+    end
+
+    def special_kwarg?(sk = nil)
+      if sk.nil?
+        kwarg? && k.to_s[0] == "_"
+      else
+        kwarg? && k.to_s[0] == "_" && k.to_s == sk.to_s
+      end
+    end
   end
 end

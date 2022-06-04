@@ -67,7 +67,7 @@ module Rubsh
       @prog_with_args = @rcmds.map(&:__prog_with_args).join(" | ")
       @sh.logger.info(@prog_with_args)
 
-      Open3.pipeline_start(*cmds, compile_redirection_args) do |waiters|
+      ::Open3.pipeline_start(*cmds, compile_redirection_args) do |waiters|
         # unused
         @in_rd&.close
         @out_wr&.close
@@ -118,7 +118,7 @@ module Rubsh
               _, status = ::Process.wait2(w.pid, ::Process::WNOHANG | ::Process::WUNTRACED)
               break if status
               sleep 0.1
-            rescue Errno::ECHILD, Errno::ESRCH
+            rescue ::Errno::ECHILD, ::Errno::ESRCH
               status = true
             end
             failures << w.pid if status.nil?
@@ -131,7 +131,7 @@ module Rubsh
 
       @exit_code = last_status&.exitstatus
       raise Exceptions::CommandTimeoutError if timeout_occurred
-    rescue Errno::ECHILD, Errno::ESRCH
+    rescue ::Errno::ECHILD, ::Errno::ESRCH
       raise Exceptions::CommandTimeoutError if timeout_occurred
     ensure
       @out_rd_reader&.wait

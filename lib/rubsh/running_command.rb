@@ -23,6 +23,14 @@ module Rubsh
       _pipeline
     ]
 
+    SPECIAL_KWARGS_WITHIN_PIPELINE = %i[
+      _env
+      _cwd
+      _long_sep
+      _long_prefix
+      _pipeline
+    ]
+
     attr_reader :pid, :exit_code, :stdout_data, :stderr_data
 
     def initialize(sh, prog, progpath, *args, **kwargs)
@@ -77,6 +85,7 @@ module Rubsh
       opts = []
       args.each { |arg| opts << Option.build(arg) }
       kwargs.each { |k, v| opts << Option.build(k, v) }
+      validate_opts(opts)
       extract_opts(opts)
     end
 
@@ -146,20 +155,29 @@ module Rubsh
 
     private
 
+    def validate_opts(opts)
+      within_pipeline = opts.any? { |opt| opt.special_kwarg?(:_pipeline) }
+      within_pipeline && opts.each do |opt|
+        if opt.special_kwarg? && !SPECIAL_KWARGS_WITHIN_PIPELINE.include?(opt.k.to_sym)
+          raise ::ArgumentError, format("Unsupported Kwargs within _pipeline: %s", opt.k)
+        end
+      end
+    end
+
     def extract_opts(opts)
       opts.each do |opt|
         if opt.positional? # positional argument
           @args << Argument.new(opt.k)
-        elsif opt.k.to_s[0] == "_" # keyword argument - Special Kwargs
+        elsif opt.special_kwarg? # keyword argument - Special Kwargs
           raise ::ArgumentError, format("Unsupported Kwargs: %s", opt.k) unless SPECIAL_KWARGS.include?(opt.k.to_sym)
-          extract_running_command_opt(opt)
+          extract_special_kwargs_opts(opt)
         else # keyword argument
           @args << Argument.new(opt.k, opt.v)
         end
       end
     end
 
-    def extract_running_command_opt(opt)
+    def extract_special_kwargs_opts(opt)
       case opt.k.to_sym
       when :_in_data
         @_in_data = opt.v
