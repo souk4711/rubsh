@@ -131,7 +131,8 @@ module Rubsh
     end
 
     # @!visibility private
-    def __spawn_arguments(redirection_args: nil)
+    def __spawn_arguments(env: nil, redirection_args: nil)
+      env ||= @_env
       cmd_args = compile_cmd_args
       redirection_args ||= compile_redirection_args
       extra_args = compile_extra_args
@@ -141,8 +142,8 @@ module Rubsh
 
       # .
       _args =
-        if @_env
-          [@_env, [@progpath, @prog], *cmd_args, **redirection_args, **extra_args, unsetenv_others: true]
+        if env
+          [env, [@progpath, @prog], *cmd_args, **redirection_args, **extra_args, unsetenv_others: true]
         else
           [[@progpath, @prog], *cmd_args, **redirection_args, **extra_args]
         end

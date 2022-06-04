@@ -4,6 +4,7 @@ RSpec.describe Rubsh::RunningPipeline do
   let(:ls) { sh.cmd("ls") }
   let(:wc) { sh.cmd("wc") }
   let(:cat) { sh.cmd("cat") }
+  let(:env) { sh.cmd("env") }
   let(:echo) { sh.cmd("echo").bake("-n") }
   let(:less) { sh.cmd("less") }
   let(:sleep) { sh.cmd("sleep") }
@@ -82,6 +83,20 @@ RSpec.describe Rubsh::RunningPipeline do
           r.wait
           t3 = Process.clock_gettime(Process::CLOCK_MONOTONIC)
           expect(t3 - t1).to be > 1.0
+        end
+      end
+
+      describe ":_env" do
+        it "with a dictionary, only defined environment variables is accessible" do
+          r = sh.pipeline(_env: {}) do |pipeline|
+            env.call_with(_pipeline: pipeline)
+          end
+          expect(r.stdout_data).to eq("")
+
+          r = sh.pipeline(_env: {RUBSH_ENV: 1}) do |pipeline|
+            env.call_with(_pipeline: pipeline)
+          end
+          expect(r.stdout_data).to eq("RUBSH_ENV=1\n")
         end
       end
 
