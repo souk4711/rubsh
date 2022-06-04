@@ -8,9 +8,10 @@ module Rubsh
       @path = ::ENV["PATH"].split(::File::PATH_SEPARATOR)
     end
 
-    def cmd(prog)
+    def command(prog)
       Command.new(self, prog)
     end
+    alias_method :cmd, :command
 
     def pipeline(**kwarg)
       r = RunningPipeline.new(self).tap { |x| yield x }
@@ -29,12 +30,10 @@ module Rubsh
       @logger = begin
         logger = ::Logger.new($stdout)
         logger.level = ::Logger::WARN
-
         formatter = ::Logger::Formatter.new
         logger.formatter = proc do |severity, datetime, progname, msg|
           formatter.call(severity, datetime, "rubsh", msg.dump)
         end
-
         logger
       end
     end

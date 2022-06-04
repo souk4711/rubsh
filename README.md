@@ -79,10 +79,10 @@ Or install it yourself as:
 # Create a shell
 sh = Rubsh::Shell.new
 
-# Create a command
+# Create a command, use `command`/`cmd`
 cmd = sh.cmd("ls")
 
-# Invoke a command, use `call_with`/`call`
+# Invoke a command, use `call`/`call_with`
 result = cmd.call_with("-la")
 
 # Print result
