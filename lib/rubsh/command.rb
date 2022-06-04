@@ -34,7 +34,7 @@ module Rubsh
           progpath = prog
         end
       else
-        @sh.path.each do |path|
+        @sh.env.path.each do |path|
           filepath = ::File.join(path, prog)
           if ::File.executable?(filepath) && ::File.file?(filepath)
             progpath = filepath

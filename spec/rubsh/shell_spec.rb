@@ -17,11 +17,11 @@ RSpec.describe Rubsh::Shell do
     end
   end
 
-  describe "#path=" do
+  describe "Rubsh::Shell::Env#path=" do
     it "lookups prog in #path" do
       expect { subject.cmd("rubsh-83aciz.sh") }.to raise_error(Rubsh::Exceptions::CommandNotFoundError)
 
-      subject.path = RSPEC_ROOT.join("fixtures/bin/")
+      subject.env.path = RSPEC_ROOT.join("fixtures/bin/")
       expect { subject.cmd("rubsh-83aciz.sh") }.to_not raise_error
       expect { subject.cmd("ls") }.to raise_error(Rubsh::Exceptions::CommandNotFoundError)
     end
