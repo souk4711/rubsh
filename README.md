@@ -77,6 +77,7 @@ Or install it yourself as:
 ```ruby
 # Create a shell
 sh = Rubsh::Shell.new
+sh.logger.level = ::Logger::INFO
 
 # Create a command, use `command`/`cmd`
 cmd = sh.cmd("ls")
