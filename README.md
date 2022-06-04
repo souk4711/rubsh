@@ -294,6 +294,7 @@ r.stdout_data # => "11\n"
 * `_err`
 * `_err_to_out`
 * `_capture`
+* `_bg`
 * `_timeout`
 * `_ok_code`
 * `_no_out`

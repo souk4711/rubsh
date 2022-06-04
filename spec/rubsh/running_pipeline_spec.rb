@@ -70,6 +70,21 @@ RSpec.describe Rubsh::RunningPipeline do
         end
       end
 
+      describe ":_bg" do
+        it "doesn't block" do
+          t1 = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+          r = sh.pipeline(_bg: true) do |pipeline|
+            sleep.call_with(1, _pipeline: pipeline)
+          end
+          t2 = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+          expect(t2 - t1).to be < 0.1
+
+          r.wait
+          t3 = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+          expect(t3 - t1).to be > 1.0
+        end
+      end
+
       describe ":_ok_code" do
         it "doesn't raise a CommandReturnFailureError error even command execute failed" do
           r = sh.pipeline(_ok_code: 0..2) do |pipeline|

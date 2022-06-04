@@ -9,6 +9,7 @@ module Rubsh
       _err
       _err_to_out
       _capture
+      _bg
       _timeout
       _ok_code
       _out_bufsize
@@ -36,6 +37,7 @@ module Rubsh
       @err_wr = nil
       @out_rd_reader = nil
       @err_rd_reader = nil
+      @waiters = []
 
       # Special Kwargs - Controlling Input/Output
       @_in_data = nil
@@ -46,6 +48,7 @@ module Rubsh
       @_capture = nil
 
       # Special Kwargs - Execution
+      @_bg = false
       @_timeout = nil
       @_ok_code = [0]
 
@@ -56,65 +59,19 @@ module Rubsh
       @_no_err = false
     end
 
-    # @!visibility private
-    def __add_running_command(cmd)
-      @rcmds << cmd
-    end
-
-    # @!visibility private
-    def __run(**kwargs)
-      extract_opts(**kwargs)
-
-      cmds = @rcmds.map { |r| r.__spawn_arguments(redirection_args: {}) }
-      @prog_with_args = @rcmds.map(&:__prog_with_args).join(" | ")
-      @sh.logger.info(@prog_with_args)
-
-      ::Open3.pipeline_start(*cmds, compile_redirection_args) do |waiters|
-        # unused
-        @in_rd&.close
-        @out_wr&.close
-        @err_wr&.close
-
-        # input
-        @in_wr&.write(@_in_data) if @_in_data
-        @in_wr&.close
-
-        # capture output/errput
-        if @out_rd
-          @out_rd_reader = StreamReader.new(@out_rd, bufsize: @_capture ? @_out_bufsize : nil, &proc { |chunk|
-            @stdout_data << chunk unless @_no_out
-            @_capture&.call(chunk, nil)
-          })
-        end
-        if @err_rd
-          @err_rd_reader = StreamReader.new(@err_rd, bufsize: @_capture ? @_err_bufsize : nil, &proc { |chunk|
-            @stderr_data << chunk unless @_no_err
-            @_capture&.call(nil, chunk)
-          })
-        end
-
-        # wait
-        __wait(waiters, timeout: @_timeout)
-        handle_return_code
-      end
-
-      self
-    end
-
-    # @!visibility private
-    def __wait(waiters, timeout: nil)
+    def wait(timeout: nil)
       timeout_occurred = false
       last_status = nil
 
       if timeout
         begin
-          ::Timeout.timeout(timeout) { last_status = waiters.map(&:value)[-1] }
+          ::Timeout.timeout(timeout) { last_status = @waiters.map(&:value)[-1] }
         rescue ::Timeout::Error
           timeout_occurred = true
 
           failures = []
-          waiters.each { |w| ::Process.kill("TERM", w.pid) } # graceful stop
-          waiters.each { |w|
+          @waiters.each { |w| ::Process.kill("TERM", w.pid) } # graceful stop
+          @waiters.each { |w|
             _, status = nil, nil
             30.times do
               _, status = ::Process.wait2(w.pid, ::Process::WNOHANG | ::Process::WUNTRACED)
@@ -128,7 +85,7 @@ module Rubsh
           failures.each { |pid| ::Process.kill("KILL", pid) } # forceful stop
         end
       else
-        last_status = waiters.map(&:value)[-1]
+        last_status = @waiters.map(&:value)[-1]
       end
 
       @exit_code = last_status&.exitstatus
@@ -138,6 +95,17 @@ module Rubsh
     ensure
       @out_rd_reader&.wait
       @err_rd_reader&.wait
+    end
+
+    # @!visibility private
+    def __add_running_command(cmd)
+      @rcmds << cmd
+    end
+
+    # @!visibility private
+    def __run(**kwargs)
+      extract_opts(**kwargs)
+      @_bg ? run_in_background : run_in_foreground
     end
 
     private
@@ -158,6 +126,8 @@ module Rubsh
           @_err_to_out = v
         when :_capture
           @_capture = v
+        when :_bg
+          @_bg = v
         when :_timeout
           @_timeout = v
         when :_ok_code
@@ -204,11 +174,47 @@ module Rubsh
       args
     end
 
+    def spawn
+      cmds = @rcmds.map { |r| r.__spawn_arguments(redirection_args: {}) }
+      @prog_with_args = @rcmds.map(&:__prog_with_args).join(" | ")
+      @sh.logger.info(@prog_with_args)
+
+      @waiters = ::Open3.pipeline_start(*cmds, compile_redirection_args)
+      @in_wr&.write(@_in_data) if @_in_data
+      @in_wr&.close
+
+      if @out_rd
+        @out_rd_reader = StreamReader.new(@out_rd, bufsize: @_capture ? @_out_bufsize : nil, &proc { |chunk|
+          @stdout_data << chunk unless @_no_out
+          @_capture&.call(chunk, nil)
+        })
+      end
+      if @err_rd
+        @err_rd_reader = StreamReader.new(@err_rd, bufsize: @_capture ? @_err_bufsize : nil, &proc { |chunk|
+          @stderr_data << chunk unless @_no_err
+          @_capture&.call(nil, chunk)
+        })
+      end
+    ensure
+      @in_rd&.close
+      @out_wr&.close
+      @err_wr&.close
+    end
+
     def handle_return_code
       return if @_ok_code.include?(@exit_code)
-
       message = format("\n\n  RAN: %s\n\n  STDOUT:\n%s\n  STDERR:\n%s\n", @prog_with_args, @stdout_data, @stderr_data)
       raise Exceptions::CommandReturnFailureError.new(@exit_code, message)
+    end
+
+    def run_in_background
+      spawn
+    end
+
+    def run_in_foreground
+      spawn
+      wait(timeout: @_timeout)
+      handle_return_code
     end
   end
 end

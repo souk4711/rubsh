@@ -286,7 +286,6 @@ module Rubsh
 
     def handle_return_code
       return if @_ok_code.include?(@exit_code)
-
       message = format("\n\n  RAN: %s\n\n  STDOUT:\n%s\n  STDERR:\n%s\n", @prog_with_args, @stdout_data, @stderr_data)
       raise Exceptions::CommandReturnFailureError.new(@exit_code, message)
     end
