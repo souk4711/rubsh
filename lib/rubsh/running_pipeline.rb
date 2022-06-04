@@ -12,6 +12,7 @@ module Rubsh
       _bg
       _env
       _timeout
+      _cwd
       _ok_code
       _out_bufsize
       _err_bufsize
@@ -52,6 +53,7 @@ module Rubsh
       @_bg = false
       @_env = nil
       @_timeout = nil
+      @_cwd = nil
       @_ok_code = [0]
 
       # Special Kwargs - Performance & Optimization
@@ -134,6 +136,8 @@ module Rubsh
           @_env = v.transform_keys(&:to_s).transform_values(&:to_s)
         when :_timeout
           @_timeout = v
+        when :_cwd
+          @_cwd = v
         when :_ok_code
           @_ok_code = [*v]
         when :_out_bufsize
@@ -179,7 +183,7 @@ module Rubsh
     end
 
     def spawn
-      cmds = @rcmds.map { |r| r.__spawn_arguments(env: @_env, redirection_args: {}) }
+      cmds = @rcmds.map { |r| r.__spawn_arguments(env: @_env, cwd: @_cwd, redirection_args: {}) }
       @prog_with_args = @rcmds.map(&:__prog_with_args).join(" | ")
       @sh.logger.info(@prog_with_args)
 

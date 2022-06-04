@@ -45,8 +45,7 @@ When using this library you can:
   * [Subcommands](#subcommands)
   * [Piping](#piping)
 * [Reference](#reference)
-  * [Command Special Kwargs](#command-special-kwargs)
-  * [Pipeline Special Kwargs](#pipeline-special-kwargs)
+  * [Special Kwargs](#special-kwargs)
 * [Development](#development)
 * [Contributing](#contributing)
 * [Acknowledgements](#acknowledgements)
@@ -229,7 +228,7 @@ r.stdout_data # => "11\n"
 
 ## Reference
 
-### Command Special Kwargs
+### Special Kwargs
 
 * `_in_data`:
   * use: Specifies an argument for the process to use as its standard input data.
@@ -285,23 +284,6 @@ r.stdout_data # => "11\n"
 * `_pipeline`:
   * use: Specifies the :pipeline.
   * default value: `nil`
-
-### Pipeline Special Kwargs
-
-* `_in_data`
-* `_in`
-* `_out`
-* `_err`
-* `_err_to_out`
-* `_capture`
-* `_bg`
-* `_timeout`
-* `_env`
-* `_ok_code`
-* `_no_out`
-* `_no_err`
-* `_out_bufsize`
-* `_err_bufsize`
 
 
 ## Development

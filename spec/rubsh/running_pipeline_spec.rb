@@ -5,6 +5,7 @@ RSpec.describe Rubsh::RunningPipeline do
   let(:wc) { sh.cmd("wc") }
   let(:cat) { sh.cmd("cat") }
   let(:env) { sh.cmd("env") }
+  let(:pwd) { sh.cmd("pwd") }
   let(:echo) { sh.cmd("echo").bake("-n") }
   let(:less) { sh.cmd("less") }
   let(:sleep) { sh.cmd("sleep") }
@@ -97,6 +98,20 @@ RSpec.describe Rubsh::RunningPipeline do
             env.call_with(_pipeline: pipeline)
           end
           expect(r.stdout_data).to eq("RUBSH_ENV=1\n")
+        end
+      end
+
+      describe ":_cwd" do
+        it "specifies urrent working directory of the process" do
+          r = sh.pipeline(_cwd: "/") do |pipeline|
+            pwd.call_with(_cwd: "/home", _pipeline: pipeline)
+          end
+          expect(r.stdout_data).to eq("/\n")
+
+          r = sh.pipeline do |pipeline|
+            pwd.call_with(_cwd: "/home", _pipeline: pipeline)
+          end
+          expect(r.stdout_data).to eq("/home\n")
         end
       end
 

@@ -131,11 +131,11 @@ module Rubsh
     end
 
     # @!visibility private
-    def __spawn_arguments(env: nil, redirection_args: nil)
+    def __spawn_arguments(env: nil, cwd: nil, redirection_args: nil)
       env ||= @_env
       cmd_args = compile_cmd_args
       redirection_args ||= compile_redirection_args
-      extra_args = compile_extra_args
+      extra_args = compile_extra_args(cwd: cwd)
 
       # For logging
       @prog_with_args = [@progpath].concat(cmd_args).join(" ")
@@ -253,9 +253,11 @@ module Rubsh
       args
     end
 
-    def compile_extra_args
+    def compile_extra_args(cwd: nil)
+      chdir = cwd || @_cwd
+
       args = {}
-      args[:chdir] = @_cwd if @_cwd
+      args[:chdir] = chdir if chdir
       args
     end
 
