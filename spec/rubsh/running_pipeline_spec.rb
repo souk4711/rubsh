@@ -57,6 +57,19 @@ RSpec.describe Rubsh::RunningPipeline do
         end
       end
 
+      describe ":_err_to_out" do
+        it "duplicates the file descriptor bound to the process’s STDOUT also to STDERR." do
+          Dir::Tmpname.create("rubsh-") do |filename|
+            r = sh.pipeline(_out: filename, _err_to_out: true) do |pipeline|
+              rawsh.call_with("echo out; echo err >&2", _pipeline: pipeline)
+            end
+            expect(r.stdout_data).to eq("")
+            expect(r.stderr_data).to eq("")
+            expect(File.read(filename)).to eq("out\nerr\n")
+          end
+        end
+      end
+
       describe ":_ok_code" do
         it "doesn't raise a CommandReturnFailureError error even command execute failed" do
           r = sh.pipeline(_ok_code: 0..2) do |pipeline|

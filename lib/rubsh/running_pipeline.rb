@@ -7,6 +7,7 @@ module Rubsh
       _in
       _out
       _err
+      _err_to_out
       _capture
       _timeout
       _ok_code
@@ -41,6 +42,7 @@ module Rubsh
       @_in = nil
       @_out = nil
       @_err = nil
+      @_err_to_out = false
       @_capture = nil
 
       # Special Kwargs - Execution
@@ -152,6 +154,8 @@ module Rubsh
           @_out = v
         when :_err
           @_err = v
+        when :_err_to_out
+          @_err_to_out = v
         when :_capture
           @_capture = v
         when :_timeout
@@ -188,7 +192,9 @@ module Rubsh
         args[:out] = @out_wr.fileno
       end
 
-      if @_err
+      if @_err_to_out
+        args[:err] = [:child, :out]
+      elsif @_err
         args[:err] = @_err
       else
         @err_rd, @err_wr = ::IO.pipe

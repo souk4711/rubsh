@@ -172,15 +172,15 @@ sh.cmd("sleep").call_with(3)
 p "...3 seconds later"
 
 # Doesn't block
-s = sh.cmd("sleep").call_with(3, _bg: true)
+r = sh.cmd("sleep").call_with(3, _bg: true)
 p "prints immediately!"
-s.wait()
+r.wait()
 p "...and 3 seconds later"
 
 # Timeout
-s = sh.cmd("sleep").call_with(30, _bg: true)
+r = sh.cmd("sleep").call_with(30, _bg: true)
 p "prints immediately!"
-s.wait(timeout: 3)
+r.wait(timeout: 3)
 p "...and 3 seconds later"
 ```
 
@@ -292,6 +292,7 @@ r.stdout_data # => "11\n"
 * `_in`
 * `_out`
 * `_err`
+* `_err_to_out`
 * `_capture`
 * `_timeout`
 * `_ok_code`

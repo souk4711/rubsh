@@ -234,19 +234,19 @@ module Rubsh
       end
 
       if @_out
-        args[@_err_to_out ? [:out, :err] : :out] = @_out
+        args[:out] = @_out
       else
         @out_rd, @out_wr = ::IO.pipe
-        args[@_err_to_out ? [:out, :err] : :out] = @out_wr.fileno
+        args[:out] = @out_wr.fileno
       end
 
-      unless @_err_to_out
-        if @_err
-          args[:err] = @_err
-        else
-          @err_rd, @err_wr = ::IO.pipe
-          args[:err] = @err_wr.fileno
-        end
+      if @_err_to_out
+        args[:err] = [:child, :out]
+      elsif @_err
+        args[:err] = @_err
+      else
+        @err_rd, @err_wr = ::IO.pipe
+        args[:err] = @err_wr.fileno
       end
 
       args
