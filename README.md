@@ -6,7 +6,7 @@ Rubsh (a.k.a. ruby-sh) - Inspired by [python-sh], allows you to call any program
 require 'rubsh'
 
 sh = Rubsh::Shell.new
-p sh.cmd('ifconfig').call_with('wlan0')
+print(sh.cmd('ifconfig').call_with('wlan0').stdout_data)
 ```
 
 Output:

@@ -1,11 +1,9 @@
 module Rubsh
   class Shell
     attr_reader :env
-    attr_writer :logger
 
     def initialize
       @env = Env.new
-      @logger = nil
     end
 
     def command(prog)
@@ -17,21 +15,6 @@ module Rubsh
       r = RunningPipeline.new(self).tap { |x| yield x }
       r.__run(**kwarg)
       r
-    end
-
-    def logger
-      return @logger if @logger
-
-      require "logger"
-      @logger = begin
-        logger = ::Logger.new($stdout)
-        logger.level = ::Logger::WARN
-        formatter = ::Logger::Formatter.new
-        logger.formatter = proc do |severity, datetime, progname, msg|
-          formatter.call(severity, datetime, "rubsh", msg.dump)
-        end
-        logger
-      end
     end
   end
 end

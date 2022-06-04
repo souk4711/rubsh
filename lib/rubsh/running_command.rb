@@ -122,7 +122,7 @@ module Rubsh
     end
 
     def inspect
-      @stdout_data&.strip
+      format("#<Rubsh::RunningCommand '%s'>", @prog_with_args)
     end
 
     # @!visibility private
@@ -267,8 +267,6 @@ module Rubsh
 
     def spawn
       args = __spawn_arguments
-      @sh.logger.info(@prog_with_args)
-
       @pid = ::Process.spawn(*args)
       @in_wr&.write(@_in_data) if @_in_data
       @in_wr&.close

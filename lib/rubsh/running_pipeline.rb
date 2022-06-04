@@ -102,7 +102,7 @@ module Rubsh
     end
 
     def inspect
-      @stdout_data&.strip
+      format("#<Rubsh::RunningPipeline '%s'>", @prog_with_args)
     end
 
     # @!visibility private
@@ -190,8 +190,6 @@ module Rubsh
     def spawn
       cmds = @rcmds.map { |r| r.__spawn_arguments(env: @_env, cwd: @_cwd, redirection_args: {}) }
       @prog_with_args = @rcmds.map(&:__prog_with_args).join(" | ")
-      @sh.logger.info(@prog_with_args)
-
       @waiters = ::Open3.pipeline_start(*cmds, compile_redirection_args)
       @in_wr&.write(@_in_data) if @_in_data
       @in_wr&.close
