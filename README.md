@@ -3,8 +3,10 @@
 Rubsh (a.k.a. ruby-sh) - Inspired by [python-sh], allows you to call any program as if it were a function:
 
 ```ruby
+require 'rubsh'
+
 sh = Rubsh::Shell.new
-sh.cmd('ifconfig').call_with('wlan0')
+p sh.cmd('ifconfig').call_with('wlan0')
 ```
 
 Output:
