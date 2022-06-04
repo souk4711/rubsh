@@ -20,6 +20,10 @@ module Rubsh
       cmd
     end
 
+    def inspect
+      format("#<Rubsh::Command '%s'>", @progpath)
+    end
+
     # @!visibility private
     def __bake!(*args, **kwargs)
       args.each { |arg| @baked_opts << Option.build(arg) }
