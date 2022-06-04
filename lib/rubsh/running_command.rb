@@ -121,6 +121,10 @@ module Rubsh
       @err_rd_reader&.wait
     end
 
+    def inspect
+      @stdout_data&.strip
+    end
+
     # @!visibility private
     def __run
       if @_pipeline
