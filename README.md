@@ -248,7 +248,7 @@ r.stdout_data # => "11\n"
   * default value: `false`
 * `_capture`:
   * use: Iterates over STDOUT/STDERR.
-  * default value: nil
+  * default value: `nil`
 * `_bg`:
   * use: Runs a command in the background. The command will return immediately, and you will have to run RunningCommand#wait on it to ensure it terminates.
   * default value: `false`
