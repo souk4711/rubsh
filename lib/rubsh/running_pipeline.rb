@@ -93,9 +93,9 @@ module Rubsh
       end
 
       @exit_code = last_status&.exitstatus
-      raise Exceptions::CommandTimeoutError if timeout_occurred
+      raise Exceptions::CommandTimeoutError, "execution expired" if timeout_occurred
     rescue ::Errno::ECHILD, ::Errno::ESRCH
-      raise Exceptions::CommandTimeoutError if timeout_occurred
+      raise Exceptions::CommandTimeoutError, "execution expired" if timeout_occurred
     ensure
       @out_rd_reader&.wait
       @err_rd_reader&.wait
@@ -108,6 +108,7 @@ module Rubsh
 
     # @!visibility private
     def __run(**kwargs)
+      raise Exceptions::CommandNotFoundError, format("no commands") if @rcmds.length == 0
       extract_opts(**kwargs)
       @_bg ? run_in_background : run_in_foreground
     end
@@ -116,7 +117,7 @@ module Rubsh
 
     def extract_opts(**kwargs)
       kwargs.each do |k, v|
-        raise ::ArgumentError, format("Unsupported kwarg: %s", k) unless SPECIAL_KWARGS.include?(k.to_sym)
+        raise ::ArgumentError, format("unsupported kwarg `%s'", k) unless SPECIAL_KWARGS.include?(k.to_sym)
         case k.to_sym
         when :_in_data
           @_in_data = v

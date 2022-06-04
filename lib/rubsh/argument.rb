@@ -30,7 +30,7 @@ module Rubsh
         elsif name.is_a?(::String)
           nil
         else
-          raise ::ArgumentError, format("Unsupported argument type: %s (%s)", name, name.class)
+          raise ::ArgumentError, format("unsupported argument type `%s (%s)'", name, name.class)
         end
 
         return format("%s%s", long_prefix, name) if value.is_a?(::TrueClass)

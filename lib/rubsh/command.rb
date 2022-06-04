@@ -43,7 +43,7 @@ module Rubsh
         end
       end
 
-      raise Exceptions::CommandNotFoundError if progpath.nil?
+      raise Exceptions::CommandNotFoundError, format("no command `%s'", prog) if progpath.nil?
       progpath
     end
   end

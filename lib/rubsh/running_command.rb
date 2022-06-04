@@ -113,9 +113,9 @@ module Rubsh
       end
 
       @exit_code = status&.exitstatus
-      raise Exceptions::CommandTimeoutError if timeout_occurred
+      raise Exceptions::CommandTimeoutError, "execution expired" if timeout_occurred
     rescue Errno::ECHILD, Errno::ESRCH
-      raise Exceptions::CommandTimeoutError if timeout_occurred
+      raise Exceptions::CommandTimeoutError, "execution expired" if timeout_occurred
     ensure
       @out_rd_reader&.wait
       @err_rd_reader&.wait
@@ -160,7 +160,7 @@ module Rubsh
       within_pipeline = opts.any? { |opt| opt.special_kwarg?(:_pipeline) }
       within_pipeline && opts.each do |opt|
         if opt.special_kwarg? && !SPECIAL_KWARGS_WITHIN_PIPELINE.include?(opt.k.to_sym)
-          raise ::ArgumentError, format("Unsupported Kwargs within _pipeline: %s", opt.k)
+          raise ::ArgumentError, format("unsupported Kwargs within _pipeline `%s'", opt.k)
         end
       end
     end
@@ -170,7 +170,7 @@ module Rubsh
         if opt.positional? # positional argument
           @args << Argument.new(opt.k)
         elsif opt.special_kwarg? # keyword argument - Special Kwargs
-          raise ::ArgumentError, format("Unsupported Kwargs: %s", opt.k) unless SPECIAL_KWARGS.include?(opt.k.to_sym)
+          raise ::ArgumentError, format("unsupported Kwargs `%s'", opt.k) unless SPECIAL_KWARGS.include?(opt.k.to_sym)
           extract_special_kwargs_opts(opt)
         else # keyword argument
           @args << Argument.new(opt.k, opt.v)
