@@ -10,6 +10,7 @@ RSpec.describe Rubsh::Command do
   let(:ls) { described_class.new(sh, "ls") }
   let(:cat) { described_class.new(sh, "cat") }
   let(:env) { described_class.new(sh, "env") }
+  let(:git) { described_class.new(sh, "git") }
   let(:pwd) { described_class.new(sh, "pwd") }
   let(:echo) { described_class.new(sh, "echo").bake("-n") }
   let(:sleep) { described_class.new(sh, "sleep") }
@@ -48,6 +49,17 @@ RSpec.describe Rubsh::Command do
 
       it "positional & option argument" do
         expect(ls.call_with("-l", A: true, almost_all: true)).to be_called_with_arguments(["-l", "-A", "--almost-all"])
+      end
+
+      it "with String, Symbol, Hash, etc." do
+        expect(git.call("status")).to be_called_with_arguments(["status"])
+        expect(git.call(:status)).to be_called_with_arguments(["status"])
+        expect(git.call(:status, "-v")).to be_called_with_arguments(["status", "-v"])
+        expect(git.call(:status, v: true)).to be_called_with_arguments(["status", "-v"])
+        expect(git.call(:status, {v: true})).to be_called_with_arguments(["status", "-v"])
+        expect(git.call(:status, {v: true}, "--", ".")).to be_called_with_arguments(["status", "-v", "--", "."])
+        expect(git.call(:status, {v: proc { true }, short: true}, "--", ".")).to be_called_with_arguments(["status", "-v", "--short", "--", "."])
+        expect(git.call(:status, {untracked_files: "normal"}, "--", ".")).to be_called_with_arguments(["status", "--untracked-files=normal", "--", "."])
       end
 
       it "with #bake" do

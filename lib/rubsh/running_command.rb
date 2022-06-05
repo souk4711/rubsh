@@ -83,7 +83,13 @@ module Rubsh
       @_pipeline = nil
 
       opts = []
-      args.each { |arg| opts << Option.build(arg) }
+      args.each do |arg|
+        if arg.is_a?(::Hash)
+          arg.each { |k, v| opts << Option.build(k, v) }
+        else
+          opts << Option.build(arg)
+        end
+      end
       kwargs.each { |k, v| opts << Option.build(k, v) }
       validate_opts(opts)
       extract_opts(opts)

@@ -93,15 +93,20 @@ print result.stdout_data
 ### Passing Arguments
 
 ```ruby
-# Resolves to "/usr/bin/ls -l /tmp --color=always --human-readable"
 sh.cmd("ls").call_with("-l", "/tmp", color: "always", human_readable: true)
+  # => ["/usr/bin/ls", "-l", "/tmp", "--color=always", "--human-readable"]
 
-# Resolves to "/usr/bin/curl https://www.ruby-lang.org/ -opage.html --silent"
 sh.cmd("curl").call_with("https://www.ruby-lang.org/", o: "page.html", silent: true)
+  # => ["/usr/bin/curl", "https://www.ruby-lang.org/", "-opage.html", "--silent"]
 
-# Or if you prefer not to use keyword arguments, this does the same thing:
-sh.cmd("curl").call_with("https://www.ruby-lang.org/", "-o", "page.html", "--silent")
+sh.cmd("git").call(:status, { v: true })
+  # => ["/usr/bin/git", "status", "-v"]
 
+sh.cmd("git").call(:status, { v: true }, "--", ".")
+  # => ["/usr/bin/git", "status", "-v", "--", "."]
+
+sh.cmd("git").call(:status, { v: proc{ true }, short: true }, "--", ".")
+  # => ["/usr/bin/git", "status", "-v", "--short", "--", "."]
 ```
 
 ### Exit Codes
@@ -188,9 +193,8 @@ p "...and 3 seconds later"
 ### Baking
 
 ```ruby
-# Resolves to "/usr/bin/ls -l /tmp"
 ll = sh.cmd("ls").bake("-l")
-ll.call_with("/tmp")
+ll.call_with("/tmp") # => ["/usr/bin/ls", "-l", "/tmp"]
 
 # Equivalent
 sh.cmd("ls").call_with("-l", "/tmp")
@@ -212,8 +216,8 @@ myserver.call_with('pwd')
 # Use `bake`
 gst = sh.cmd("git").bake("status")
 
-gst.call_with() # Resolves to "/usr/bin/git status"
-gst.call_with("-s") # Resolves to "/usr/bin/git status -s"
+gst.call_with() # => ["/usr/bin/git", "status"]
+gst.call_with("-s") # => ["/usr/bin/git", "status", "-s"]
 ```
 
 ### Piping
