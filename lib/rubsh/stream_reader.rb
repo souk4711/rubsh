@@ -31,6 +31,7 @@ module Rubsh
       end
     end
 
+    # @return [void]
     def wait
       @thr.join
     end

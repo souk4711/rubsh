@@ -13,8 +13,8 @@ module Rubsh
       @baked_opts = []
     end
 
-    # @param args[String, Symbol, #to_s, Hash]
-    # @param kwargs[Hash]
+    # @param args [String, Symbol, #to_s, Hash]
+    # @param kwargs [Hash]
     # @return [RunningCommand] An new instance of RunningCommand with execution state.
     # @example
     #
@@ -28,7 +28,7 @@ module Rubsh
     #   git.call(:status, v: true)                  # => ["git", "status", "-v"]
     #   git.call(:status, { v: true }, "--", ".")   # => ["git", "status", "-v", "--", "."]
     #   git.call(:status, { v: proc{ true }, short: true }, "--", ".")  # => ["git", "status", "-v", "--short=true", "--", "."]
-    #   git.call(:status, { untracked_files: "normal" }, "--", ".")     # =>["status", "--untracked-files=normal", "--", "."])
+    #   git.call(:status, { untracked_files: "normal" }, "--", ".")     # => ["git", "status", "--untracked-files=normal", "--", "."]
     def call(*args, **kwargs)
       rcmd = RunningCommand.new(@sh, @prog, @progpath, *@baked_opts, *args, **kwargs)
       rcmd.__run
@@ -36,8 +36,8 @@ module Rubsh
     end
     alias_method :call_with, :call
 
-    # @param args[String, Symbol, #to_s, Hash]
-    # @param kwargs[Hash]
+    # @param args [String, Symbol, #to_s, Hash]
+    # @param kwargs [Hash]
     # @return [Command] a new instance of Command with baked options.
     def bake(*args, **kwargs)
       cmd = Command.new(@sh, @prog)

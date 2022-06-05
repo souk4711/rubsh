@@ -20,7 +20,17 @@ module Rubsh
       _no_err
     ]
 
-    attr_reader :exit_code, :stdout_data, :stderr_data
+    # @!attribute [r] exit_code
+    # @return [Number]
+    attr_reader :exit_code
+
+    # @!attribute [r] stdout_data
+    # @return [String]
+    attr_reader :stdout_data
+
+    # @!attribute [r] stderr_data
+    # @return [String]
+    attr_reader :stderr_data
 
     def initialize(sh)
       @sh = sh
@@ -63,6 +73,7 @@ module Rubsh
       @_no_err = false
     end
 
+    # @return [void]
     def wait(timeout: nil)
       timeout_occurred = false
       last_status = nil
@@ -101,6 +112,7 @@ module Rubsh
       @err_rd_reader&.wait
     end
 
+    # @return [String]
     def inspect
       format("#<Rubsh::RunningPipeline '%s'>", @prog_with_args)
     end
@@ -121,7 +133,7 @@ module Rubsh
 
     def extract_opts(**kwargs)
       kwargs.each do |k, v|
-        raise ::ArgumentError, format("unsupported kwarg `%s'", k) unless SPECIAL_KWARGS.include?(k.to_sym)
+        raise ::ArgumentError, format("unsupported special kwarg `%s'", k) unless SPECIAL_KWARGS.include?(k.to_sym)
         case k.to_sym
         when :_in_data
           @_in_data = v

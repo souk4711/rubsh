@@ -31,7 +31,21 @@ module Rubsh
       _pipeline
     ]
 
-    attr_reader :pid, :exit_code, :stdout_data, :stderr_data
+    # @!attribute [r] pid
+    # @return [Number]
+    attr_reader :pid
+
+    # @!attribute [r] exit_code
+    # @return [Number]
+    attr_reader :exit_code
+
+    # @!attribute [r] stdout_data
+    # @return [String]
+    attr_reader :stdout_data
+
+    # @!attribute [r] stderr_data
+    # @return [String]
+    attr_reader :stderr_data
 
     def initialize(sh, prog, progpath, *args, **kwargs)
       @sh = sh
@@ -95,6 +109,7 @@ module Rubsh
       extract_opts(opts)
     end
 
+    # @return [void]
     def wait(timeout: nil)
       timeout_occurred = false
       _, status = nil, nil
@@ -127,6 +142,7 @@ module Rubsh
       @err_rd_reader&.wait
     end
 
+    # @return [String]
     def inspect
       format("#<Rubsh::RunningCommand '%s'>", @prog_with_args)
     end
@@ -170,20 +186,26 @@ module Rubsh
       within_pipeline = opts.any? { |opt| opt.special_kwarg?(:_pipeline) }
       within_pipeline && opts.each do |opt|
         if opt.special_kwarg? && !SPECIAL_KWARGS_WITHIN_PIPELINE.include?(opt.k.to_sym)
-          raise ::ArgumentError, format("unsupported Kwargs within _pipeline `%s'", opt.k)
+          raise ::ArgumentError, format("unsupported special kwargs within _pipeline `%s'", opt.k)
         end
       end
     end
 
     def extract_opts(opts)
+      args_hash = {}
       opts.each do |opt|
         if opt.positional? # positional argument
           @args << Argument.new(opt.k)
         elsif opt.special_kwarg? # keyword argument - Special Kwargs
-          raise ::ArgumentError, format("unsupported Kwargs `%s'", opt.k) unless SPECIAL_KWARGS.include?(opt.k.to_sym)
+          raise ::ArgumentError, format("unsupported special kwargs `%s'", opt.k) unless SPECIAL_KWARGS.include?(opt.k.to_sym)
           extract_special_kwargs_opts(opt)
-        else # keyword argument
-          @args << Argument.new(opt.k, opt.v)
+        elsif args_hash.key?(opt.k) # keyword argument
+          arg = args_hash[opt.k]
+          arg.value = opt.v
+        else
+          arg = Argument.new(opt.k, opt.v)
+          args_hash[opt.k] = arg
+          @args << arg
         end
       end
     end

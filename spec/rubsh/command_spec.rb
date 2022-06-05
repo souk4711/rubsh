@@ -62,18 +62,20 @@ RSpec.describe Rubsh::Command do
         expect(git.call(:status, {untracked_files: "normal"}, "--", ".")).to be_called_with_arguments(["status", "--untracked-files=normal", "--", "."])
       end
 
-      it "with #bake" do
-        lla = ls.bake("-l", group_directories_first: true).bake("-A")
-        expect(lla.call_with("/")).to be_called_with_arguments(["-l", "--group-directories-first", "-A", "/"])
+      it "overwrites kwargs" do
+        expect(git.call(:status, {v: true})).to be_called_with_arguments(["status", "-v"])
+        expect(git.call(:status, {v: true}, v: false)).to be_called_with_arguments(["status"])
+        expect(git.bake(:status, {v: true}).call(v: false)).to be_called_with_arguments(["status"])
+        expect(git.bake(:status, {v: true}).call("v" => false)).to be_called_with_arguments(["status"])
+      end
+
+      it "overwrites special kwargs" do
+        r = env.bake(_env: {RUBSH_ENV_BAKE: 1}).call_with(_env: {RUBSH_ENV_CALL: 1})
+        expect(r.stdout_data).to eq("RUBSH_ENV_CALL=1\n")
       end
     end
 
     describe "special kwargs" do
-      it "overwrites special kwargs defined in #bake" do
-        r = env.bake(_env: {RUBSH_ENV_BAKE: 1}).call_with(_env: {RUBSH_ENV_CALL: 1})
-        expect(r.stdout_data).to eq("RUBSH_ENV_CALL=1\n")
-      end
-
       describe ":_out" do
         it "redirects to :_out " do
           Dir::Tmpname.create("rubsh-") do |filename|
@@ -265,6 +267,11 @@ RSpec.describe Rubsh::Command do
       lla = ls.bake("-la")
       expect(lla).to be_a(described_class)
       expect(lla).not_to eq(ls)
+    end
+
+    it "supports kwargs" do
+      lla = ls.bake("-l", group_directories_first: true).bake("-A")
+      expect(lla.call_with("/")).to be_called_with_arguments(["-l", "--group-directories-first", "-A", "/"])
     end
 
     it "supports specifies kwargs" do

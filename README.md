@@ -107,6 +107,9 @@ sh.cmd("git").call(:status, { v: true }, "--", ".")
 
 sh.cmd("git").call(:status, { v: proc{ true }, short: true }, "--", ".")
   # => ["/usr/bin/git", "status", "-v", "--short", "--", "."]
+
+sh.cmd("git").call(:status, { v: true }, v: false)
+  # => ["/usr/bin/git", "status"])
 ```
 
 ### Exit Codes

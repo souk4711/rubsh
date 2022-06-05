@@ -60,14 +60,11 @@ RSpec.describe Rubsh::Argument do
     it "supports name use String type, keep original name" do
       expect(described_class.new("output", "hello")).to compiled_to("--output=hello")
       expect(described_class.new("output-file", "hello")).to compiled_to("--output-file=hello")
-      expect(described_class.new("output_file", "hello")).to compiled_to("--output_file=hello")
     end
 
     it "supports name use Symbol type" do
       expect(described_class.new(:output, "hello")).to compiled_to("--output=hello")
       expect(described_class.new(:"output-file", "hello")).to compiled_to("--output-file=hello")
-      expect(described_class.new(:output_file, "hello")).to compiled_to("--output-file=hello")
-      expect(described_class.new(:group_directories_first, true)).to compiled_to("--group-directories-first")
     end
 
     it "supports value use FalseClass type" do
