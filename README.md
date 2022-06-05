@@ -30,6 +30,7 @@ When using this library you can:
 * Call any program as if it were a function.
 * Get an exception when exit code is not 0.
 * Force terminate the process if it does not finish within the timeout.
+* Always split the shell command into tokens, reduce command injection risk.
 * etc.
 
 
@@ -115,7 +116,7 @@ sh.cmd("git").call(:status, { v: proc{ true }, short: true }, "--", ".")
   # => ["/usr/bin/git", "status", "-v", "--short", "--", "."]
 
 sh.cmd("git").call(:status, { v: true }, v: false)
-  # => ["/usr/bin/git", "status"])
+  # => ["/usr/bin/git", "status"]
 ```
 
 ### Exit Codes
