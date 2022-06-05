@@ -48,6 +48,12 @@ When using this library you can:
   * [Piping](#piping)
 * [Reference](#reference)
   * [Special Kwargs](#special-kwargs)
+* [FAQ](#faq)
+  * [Why doesn’t `*` work as a command argument?](#why-doesnt--work-as-a-command-argument)
+  * [How do I execute a bash builtin?](#how-do-i-execute-a-bash-builtin)
+  * [How do I call a program that isn’t in $PATH?](#how-do-i-call-a-program-that-isnt-in-path)
+  * [How do I run a command and connect it to stdout and stdin?](#how-do-i-run-a-command-and-connect-it-to-stdout-and-stdin)
+  * [How do I order keyword arguments?](#how-do-i-order-keyword-arguments)
 * [Development](#development)
 * [Contributing](#contributing)
 * [Acknowledgements](#acknowledgements)
@@ -273,10 +279,10 @@ r.stdout_data # => "11\n"
   * use: Some misbehaved programs use exit codes other than 0 to indicate success. Set to treats as success.
   * default value: `[0]`
 * `_no_out`:
-  * use: Disables STDOUT being internally stored. This is useful for commands that produce huge amounts of output that you don’t need, that would otherwise be hogging memory if stored internally by rubsh.
+  * use: Disables STDOUT being internally stored. This is useful for commands that produce huge amounts of output that you don’t need, that would otherwise be hogging memory if stored internally by Rubsh.
   * default value: `false`
 * `_no_err`:
-  * use: Disables STDERR being internally stored. This is useful for commands that produce huge amounts of output that you don’t need, that would otherwise be hogging memory if stored internally by rubsh.
+  * use: Disables STDERR being internally stored. This is useful for commands that produce huge amounts of output that you don’t need, that would otherwise be hogging memory if stored internally by Rubsh.
   * default value: `false`
 * `_out_bufsize`:
   * use: The STDOUT buffer size. nil for unbuffered, 0 for line buffered, anything else for a buffer of that amount.
@@ -293,6 +299,57 @@ r.stdout_data # => "11\n"
 * `_pipeline`:
   * use: Specifies the :pipeline.
   * default value: `nil`
+
+
+## FAQ
+
+### Why doesn’t `*` work as a command argument?
+
+Glob expansion is a feature of a shell, like Bash, and is performed by the shell before passing the results to the program to be exec'd. Because Rubsh is not a shell, but rather tool to execute programs directly, we do not handle glob expansion like a shell would.
+
+### How do I execute a bash builtin?
+
+```ruby
+sh = Rubsh::Shell.new
+rawsh = sh.cmd('bash').bake('-c')
+print(rawsh.call_with('echo Hello').stdout_data) # => "Hello\n"
+```
+
+### How do I call a program that isn’t in $PATH?
+
+Use absolute binpath
+
+```ruby
+sh = Rubsh::Shell.new
+sh.cmd('/path/to/command').call()
+```
+
+OR Use `Rubsh::Shell::Env#path`
+
+```ruby
+sh = Rubsh::Shell.new
+sh.env.path << "/dir/to/command/"
+sh.cmd('command').call()
+```
+
+### How do I run a command and connect it to stdout and stdin?
+
+Use `_capture` special kwargs.
+
+### How do I order keyword arguments?
+
+Typically this question gets asked when a user is trying to execute something like the following commandline:
+
+```sh
+my-command --arg1=val1 arg2 --arg3=val3
+```
+
+Use:
+
+```ruby
+sh = Rubsh::Shell.new
+sh.cmd('my-command').call_with({ arg1: "val1" }, "args2", { arg3: "val3" })
+```
 
 
 ## Development
