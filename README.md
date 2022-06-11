@@ -34,34 +34,6 @@ When using this library you can:
 * etc.
 
 
-## Table of Contents
-
-* [Installation](#installation)
-* [Usage](#usage)
-  * [Basic Syntax](#basic-syntax)
-  * [Passing Arguments](#passing-arguments)
-  * [Exit Codes](#exit-codes)
-  * [Redirection](#redirection)
-  * [Incremental Iteration](#incremental-iteration)
-  * [Background Processes](#background-processes)
-  * [Baking](#baking)
-  * [Subcommands](#subcommands)
-  * [Piping](#piping)
-* [Reference](#reference)
-  * [Special Kwargs](#special-kwargs)
-* [FAQ](#faq)
-  * [Why doesn’t `*` work as a command argument?](#why-doesnt--work-as-a-command-argument)
-  * [How do I execute a bash builtin?](#how-do-i-execute-a-bash-builtin)
-  * [How do I call a program that isn’t in $PATH?](#how-do-i-call-a-program-that-isnt-in-path)
-  * [How do I run a command and connect it to stdout and stdin?](#how-do-i-run-a-command-and-connect-it-to-stdout-and-stdin)
-  * [How do I order keyword arguments?](#how-do-i-order-keyword-arguments)
-* [Development](#development)
-* [Contributing](#contributing)
-* [Acknowledgements](#acknowledgements)
-* [License](#license)
-* [Code Of Conduct](#code-of-conduct)
-
-
 ## Installation
 
 Add this line to your application's Gemfile:
