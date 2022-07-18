@@ -24,6 +24,14 @@ module Rubsh
     # @return [Number]
     attr_reader :exit_code
 
+    # @!attribute [r] start_time
+    # @return [Time]
+    attr_reader :start_time
+
+    # @!attribute [r] finish_time
+    # @return [Time]
+    attr_reader :finish_time
+
     # @!attribute [r] stdout_data
     # @return [String]
     attr_reader :stdout_data
@@ -39,6 +47,8 @@ module Rubsh
       # Runtime
       @prog_with_args = nil
       @exit_code = nil
+      @start_time = nil
+      @finish_time = nil
       @stdout_data = "".force_encoding(::Encoding.default_external)
       @stderr_data = "".force_encoding(::Encoding.default_external)
       @in_rd = nil
@@ -104,6 +114,7 @@ module Rubsh
       end
 
       @exit_code = last_status&.exitstatus
+      @finish_time = Time.now
       raise Exceptions::CommandTimeoutError, "execution expired" if timeout_occurred
     rescue ::Errno::ECHILD, ::Errno::ESRCH
       raise Exceptions::CommandTimeoutError, "execution expired" if timeout_occurred
@@ -203,6 +214,7 @@ module Rubsh
       cmds = @rcmds.map { |r| r.__spawn_arguments(env: @_env, cwd: @_cwd, redirection_args: {}) }
       @prog_with_args = @rcmds.map(&:__prog_with_args).join(" | ")
       @waiters = ::Open3.pipeline_start(*cmds, compile_redirection_args)
+      @start_time = Time.now
       @in_wr&.write(@_in_data) if @_in_data
       @in_wr&.close
 
