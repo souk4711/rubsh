@@ -39,13 +39,13 @@ module Rubsh
     # @return [Number]
     attr_reader :exit_code
 
-    # @!attribute [r] start_time
+    # @!attribute [r] started_at
     # @return [Time]
-    attr_reader :start_time
+    attr_reader :started_at
 
-    # @!attribute [r] finish_time
+    # @!attribute [r] finished_at
     # @return [Time]
-    attr_reader :finish_time
+    attr_reader :finished_at
 
     # @!attribute [r] stdout_data
     # @return [String]
@@ -65,8 +65,8 @@ module Rubsh
       @prog_with_args = nil
       @pid = nil
       @exit_code = nil
-      @start_time = nil
-      @finish_time = nil
+      @started_at = nil
+      @finished_at = nil
       @stdout_data = "".force_encoding(::Encoding.default_external)
       @stderr_data = "".force_encoding(::Encoding.default_external)
       @in_rd = nil
@@ -119,6 +119,12 @@ module Rubsh
       extract_opts(opts)
     end
 
+    # @return [Numeric, nil]
+    def wall_time
+      @finished_at.nil? ? nil : @finished_at - @started_at
+    end
+    alias_method :execution_time, :wall_time
+
     # @return [void]
     def wait(timeout: nil)
       timeout_occurred = false
@@ -144,7 +150,7 @@ module Rubsh
       end
 
       @exit_code = status&.exitstatus
-      @finish_time = Time.now
+      @finished_at = Time.now
       raise Exceptions::CommandTimeoutError, "execution expired" if timeout_occurred
     rescue Errno::ECHILD, Errno::ESRCH
       raise Exceptions::CommandTimeoutError, "execution expired" if timeout_occurred
@@ -307,7 +313,7 @@ module Rubsh
     def spawn
       args = __spawn_arguments
       @pid = ::Process.spawn(*args)
-      @start_time = Time.now
+      @started_at = Time.now
       @in_wr&.write(@_in_data) if @_in_data
       @in_wr&.close
 
