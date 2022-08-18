@@ -1,0 +1,20 @@
+name: RuboCop
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    name: "Ruby: 3.1 OS: ubuntu-latest"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Install Ruby & Execute 'bundle install'
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: 3.1
+          bundler-cache: true
+      - name: Run RuboCop
+        run: |
+          ruby -v
+          bin/rubocop
