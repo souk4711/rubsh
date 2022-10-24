@@ -1,5 +1,8 @@
 # frozen_string_literal: true
 
+require "open3"
+require "timeout"
+
 require_relative "rubsh/argument"
 require_relative "rubsh/command"
 require_relative "rubsh/exceptions"

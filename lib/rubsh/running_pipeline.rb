@@ -1,5 +1,3 @@
-require "open3"
-
 module Rubsh
   class RunningPipeline
     SPECIAL_KWARGS = %i[

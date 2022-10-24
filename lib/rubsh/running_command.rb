@@ -1,5 +1,3 @@
-require "timeout"
-
 module Rubsh
   class RunningCommand
     SPECIAL_KWARGS = %i[
