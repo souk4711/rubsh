@@ -46,8 +46,8 @@ module Rubsh
     end
 
     # @return [String]
-    def inspect
-      format("#<Rubsh::Command '%s'>", @progpath)
+    def to_s
+      @progpath
     end
 
     # @!visibility private

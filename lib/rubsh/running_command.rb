@@ -135,8 +135,8 @@ module Rubsh
     end
 
     # @return [String]
-    def inspect
-      format("#<Rubsh::RunningCommand '%s'>", @prog_with_args)
+    def to_s
+      @prog_with_args
     end
 
     # @!visibility private
