@@ -19,5 +19,8 @@ gem "rspec", "~> 3.0"
 gem "yard", "~> 0.9"
 gem "redcarpet", "~> 3.5"
 
+# lsp
+gem "solargraph"
+
 # misc
 gem "overcommit", "~> 0.59"
