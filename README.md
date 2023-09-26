@@ -297,7 +297,7 @@ sh = Rubsh.new
 sh.cmd('/path/to/command').call()
 ```
 
-OR Use `Rubsh::Env#path`
+Or use `Rubsh::Shell::Env#path`
 
 ```ruby
 sh = Rubsh.new
