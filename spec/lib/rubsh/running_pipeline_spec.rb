@@ -76,14 +76,14 @@ RSpec.describe Rubsh::RunningPipeline do
         it "doesn't block" do
           t1 = Process.clock_gettime(Process::CLOCK_MONOTONIC)
           r = sh.pipeline(_bg: true) do |pipeline|
-            sleep.call_with(0.5, _pipeline: pipeline)
+            sleep.call_with(1, _pipeline: pipeline)
           end
           t2 = Process.clock_gettime(Process::CLOCK_MONOTONIC)
           expect(t2 - t1).to be < 0.1
 
           r.wait
           t3 = Process.clock_gettime(Process::CLOCK_MONOTONIC)
-          expect(t3 - t1).to be > 0.5
+          expect(t3 - t1).to be > 1.0
         end
       end
 
