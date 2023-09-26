@@ -110,13 +110,13 @@ RSpec.describe Rubsh::Command do
       describe ":_bg" do
         it "doesn't block" do
           t1 = Process.clock_gettime(Process::CLOCK_MONOTONIC)
-          r = sleep.call_with(1, _bg: true)
+          r = sleep.call_with(0.5, _bg: true)
           t2 = Process.clock_gettime(Process::CLOCK_MONOTONIC)
           expect(t2 - t1).to be < 0.1
 
           r.wait
           t3 = Process.clock_gettime(Process::CLOCK_MONOTONIC)
-          expect(t3 - t1).to be > 1.0
+          expect(t3 - t1).to be > 0.5
         end
       end
 
