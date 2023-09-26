@@ -121,6 +121,7 @@ RSpec.describe Rubsh::RunningPipeline do
             ls.call_with("/some/non-existant/folder", _pipeline: pipeline)
           end
           expect(r.exit_code).to eq(2)
+          expect(r.ok?).to eq(true)
         end
       end
 
@@ -189,13 +190,12 @@ RSpec.describe Rubsh::RunningPipeline do
           end
         }.to raise_error(Rubsh::Exceptions::CommandReturnFailureError)
 
-        sh_bg =
+        ls_bg =
           sh.pipeline(_bg: true) do |pipeline|
             ls.call_with("/some/non-existant/folder", _pipeline: pipeline)
           end
-        expect {
-          sh_bg.wait
-        }.to raise_error(Rubsh::Exceptions::CommandReturnFailureError)
+        expect { ls_bg.wait }.to raise_error(Rubsh::Exceptions::CommandReturnFailureError)
+        expect(ls_bg.ok?).to eq(false)
       end
 
       it "raises a CommandTimeoutError error when command execute timeout" do

@@ -123,6 +123,11 @@ module Rubsh
     end
     alias_method :execution_time, :wall_time
 
+    # @return [Boolean]
+    def ok?
+      @_ok_code.include?(@exit_code)
+    end
+
     # @return [void]
     def wait(timeout: nil)
       wait2(timeout: timeout)
@@ -339,7 +344,7 @@ module Rubsh
     end
 
     def handle_return_code
-      return if @_ok_code.include?(@exit_code)
+      return if ok?
       message = format("\n\n  RAN: %s\n\n  STDOUT:\n%s\n  STDERR:\n%s\n", @prog_with_args, @stdout_data, @stderr_data)
       raise Exceptions::CommandReturnFailureError.new(@exit_code, message)
     end

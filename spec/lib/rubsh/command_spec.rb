@@ -154,6 +154,7 @@ RSpec.describe Rubsh::Command do
         it "doesn't raise a CommandReturnFailureError error even command execute failed" do
           r = ls.call_with("/some/non-existant/folder", _ok_code: [0, 2])
           expect(r.exit_code).to eq(2)
+          expect(r.ok?).to eq(true)
         end
       end
 
@@ -254,9 +255,8 @@ RSpec.describe Rubsh::Command do
         }.to raise_error(Rubsh::Exceptions::CommandReturnFailureError)
 
         ls_bg = ls.call_with("/some/non-existant/folder", _bg: true)
-        expect {
-          ls_bg.wait
-        }.to raise_error(Rubsh::Exceptions::CommandReturnFailureError)
+        expect { ls_bg.wait }.to raise_error(Rubsh::Exceptions::CommandReturnFailureError)
+        expect(ls_bg.ok?).to eq(false)
       end
 
       it "raises a CommandTimeoutError error when command execute timeout" do
