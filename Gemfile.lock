@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    ruby-sh (2.1.5)
+    ruby-sh (2.2.5)
 
 GEM
   remote: https://rubygems.org/
