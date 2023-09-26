@@ -252,6 +252,11 @@ RSpec.describe Rubsh::Command do
         expect {
           ls.call_with("/some/non-existant/folder")
         }.to raise_error(Rubsh::Exceptions::CommandReturnFailureError)
+
+        ls_bg = ls.call_with("/some/non-existant/folder", _bg: true)
+        expect {
+          ls_bg.wait
+        }.to raise_error(Rubsh::Exceptions::CommandReturnFailureError)
       end
 
       it "raises a CommandTimeoutError error when command execute timeout" do

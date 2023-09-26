@@ -125,36 +125,8 @@ module Rubsh
 
     # @return [void]
     def wait(timeout: nil)
-      timeout_occurred = false
-      _, status = nil, nil
-
-      if timeout
-        begin
-          ::Timeout.timeout(timeout) { _, status = ::Process.wait2(@pid) }
-        rescue ::Timeout::Error
-          timeout_occurred = true
-
-          ::Process.kill("TERM", @pid) # graceful stop
-          30.times do
-            _, status = ::Process.wait2(@pid, ::Process::WNOHANG | ::Process::WUNTRACED)
-            break if status
-            sleep 0.1
-          end
-          failure = @pid if status.nil?
-          failure && ::Process.kill("KILL", failure) # forceful stop
-        end
-      else
-        _, status = ::Process.wait2(@pid)
-      end
-
-      @exit_code = status&.exitstatus
-      @finished_at = Time.now
-      raise Exceptions::CommandTimeoutError, "execution expired" if timeout_occurred
-    rescue Errno::ECHILD, Errno::ESRCH
-      raise Exceptions::CommandTimeoutError, "execution expired" if timeout_occurred
-    ensure
-      @out_rd_reader&.wait
-      @err_rd_reader&.wait
+      wait2(timeout: timeout)
+      handle_return_code
     end
 
     # @return [String]
@@ -333,6 +305,39 @@ module Rubsh
       @err_wr&.close
     end
 
+    def wait2(timeout: nil)
+      timeout_occurred = false
+      _, status = nil, nil
+
+      if timeout
+        begin
+          ::Timeout.timeout(timeout) { _, status = ::Process.wait2(@pid) }
+        rescue ::Timeout::Error
+          timeout_occurred = true
+
+          ::Process.kill("TERM", @pid) # graceful stop
+          30.times do
+            _, status = ::Process.wait2(@pid, ::Process::WNOHANG | ::Process::WUNTRACED)
+            break if status
+            sleep 0.1
+          end
+          failure = @pid if status.nil?
+          failure && ::Process.kill("KILL", failure) # forceful stop
+        end
+      else
+        _, status = ::Process.wait2(@pid)
+      end
+
+      @exit_code = status&.exitstatus
+      @finished_at = Time.now
+      raise Exceptions::CommandTimeoutError, "execution expired" if timeout_occurred
+    rescue Errno::ECHILD, Errno::ESRCH
+      raise Exceptions::CommandTimeoutError, "execution expired" if timeout_occurred
+    ensure
+      @out_rd_reader&.wait
+      @err_rd_reader&.wait
+    end
+
     def handle_return_code
       return if @_ok_code.include?(@exit_code)
       message = format("\n\n  RAN: %s\n\n  STDOUT:\n%s\n  STDERR:\n%s\n", @prog_with_args, @stdout_data, @stderr_data)
@@ -347,7 +352,6 @@ module Rubsh
     def run_in_foreground
       spawn
       wait(timeout: @_timeout)
-      handle_return_code
     end
   end
 end

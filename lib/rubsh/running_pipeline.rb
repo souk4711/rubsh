@@ -89,42 +89,8 @@ module Rubsh
 
     # @return [void]
     def wait(timeout: nil)
-      timeout_occurred = false
-      last_status = nil
-
-      if timeout
-        begin
-          ::Timeout.timeout(timeout) { last_status = @waiters.map(&:value)[-1] }
-        rescue ::Timeout::Error
-          timeout_occurred = true
-
-          failures = []
-          @waiters.each { |w| ::Process.kill("TERM", w.pid) } # graceful stop
-          @waiters.each { |w|
-            _, status = nil, nil
-            30.times do
-              _, status = ::Process.wait2(w.pid, ::Process::WNOHANG | ::Process::WUNTRACED)
-              break if status
-              sleep 0.1
-            rescue ::Errno::ECHILD, ::Errno::ESRCH
-              status = true
-            end
-            failures << w.pid if status.nil?
-          }
-          failures.each { |pid| ::Process.kill("KILL", pid) } # forceful stop
-        end
-      else
-        last_status = @waiters.map(&:value)[-1]
-      end
-
-      @exit_code = last_status&.exitstatus
-      @finished_at = Time.now
-      raise Exceptions::CommandTimeoutError, "execution expired" if timeout_occurred
-    rescue ::Errno::ECHILD, ::Errno::ESRCH
-      raise Exceptions::CommandTimeoutError, "execution expired" if timeout_occurred
-    ensure
-      @out_rd_reader&.wait
-      @err_rd_reader&.wait
+      wait2(timeout: timeout)
+      handle_return_code
     end
 
     # @return [String]
@@ -240,6 +206,45 @@ module Rubsh
       @err_wr&.close
     end
 
+    def wait2(timeout: nil)
+      timeout_occurred = false
+      last_status = nil
+
+      if timeout
+        begin
+          ::Timeout.timeout(timeout) { last_status = @waiters.map(&:value)[-1] }
+        rescue ::Timeout::Error
+          timeout_occurred = true
+
+          failures = []
+          @waiters.each { |w| ::Process.kill("TERM", w.pid) } # graceful stop
+          @waiters.each { |w|
+            _, status = nil, nil
+            30.times do
+              _, status = ::Process.wait2(w.pid, ::Process::WNOHANG | ::Process::WUNTRACED)
+              break if status
+              sleep 0.1
+            rescue ::Errno::ECHILD, ::Errno::ESRCH
+              status = true
+            end
+            failures << w.pid if status.nil?
+          }
+          failures.each { |pid| ::Process.kill("KILL", pid) } # forceful stop
+        end
+      else
+        last_status = @waiters.map(&:value)[-1]
+      end
+
+      @exit_code = last_status&.exitstatus
+      @finished_at = Time.now
+      raise Exceptions::CommandTimeoutError, "execution expired" if timeout_occurred
+    rescue ::Errno::ECHILD, ::Errno::ESRCH
+      raise Exceptions::CommandTimeoutError, "execution expired" if timeout_occurred
+    ensure
+      @out_rd_reader&.wait
+      @err_rd_reader&.wait
+    end
+
     def handle_return_code
       return if @_ok_code.include?(@exit_code)
       message = format("\n\n  RAN: %s\n\n  STDOUT:\n%s\n  STDERR:\n%s\n", @prog_with_args, @stdout_data, @stderr_data)
@@ -253,7 +258,6 @@ module Rubsh
     def run_in_foreground
       spawn
       wait(timeout: @_timeout)
-      handle_return_code
     end
   end
 end
