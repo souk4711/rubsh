@@ -5,7 +5,7 @@ Rubsh (a.k.a. ruby-sh) - Inspired by [python-sh], allows you to call any program
 ```ruby
 require 'rubsh'
 
-sh = Rubsh::Shell.new
+sh = Rubsh.new
 print(sh.cmd('ifconfig').call_with('wlan0').stdout_data)
 ```
 
@@ -57,7 +57,7 @@ Or install it yourself as:
 
 ```ruby
 # Create a shell
-sh = Rubsh::Shell.new
+sh = Rubsh.new
 
 # Create a command, use `command`/`cmd`
 cmd = sh.cmd("ls")
@@ -283,7 +283,7 @@ Glob expansion is a feature of a shell, like Bash, and is performed by the shell
 ### How do I execute a bash builtin?
 
 ```ruby
-sh = Rubsh::Shell.new
+sh = Rubsh.new
 rawsh = sh.cmd('bash').bake('-c')
 print(rawsh.call_with('echo Hello').stdout_data) # => "Hello\n"
 ```
@@ -293,14 +293,14 @@ print(rawsh.call_with('echo Hello').stdout_data) # => "Hello\n"
 Use absolute binpath
 
 ```ruby
-sh = Rubsh::Shell.new
+sh = Rubsh.new
 sh.cmd('/path/to/command').call()
 ```
 
-OR Use `Rubsh::Shell::Env#path`
+OR Use `Rubsh::Env#path`
 
 ```ruby
-sh = Rubsh::Shell.new
+sh = Rubsh.new
 sh.env.path << "/dir/to/command/"
 sh.cmd('command').call()
 ```
@@ -320,7 +320,7 @@ my-command --arg1=val1 arg2 --arg3=val3
 Use:
 
 ```ruby
-sh = Rubsh::Shell.new
+sh = Rubsh.new
 sh.cmd('my-command').call_with({ arg1: "val1" }, "args2", { arg3: "val3" })
 ```
 

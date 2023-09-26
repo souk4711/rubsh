@@ -13,3 +13,9 @@ require_relative "rubsh/shell/env"
 require_relative "rubsh/shell"
 require_relative "rubsh/stream_reader"
 require_relative "rubsh/version"
+
+module Rubsh
+  def self.new
+    Shell.new
+  end
+end
