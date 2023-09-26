@@ -190,6 +190,11 @@ sh.cmd('ssh').call_with("myserver.com", "-p 1393", "whoami")
 myserver = sh.cmd('ssh').bake("myserver.com", p: 1393)
 myserver.call_with('whoami')
 myserver.call_with('pwd')
+
+# With a special kwarg
+sleep = sh.cmd('sleep').bake(_timeout: 2)
+sleep.call(1) # => ok
+sleep.call(3) # => a `CommandReturnFailureError` raised
 ```
 
 ### Subcommands
