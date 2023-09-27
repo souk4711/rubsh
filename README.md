@@ -6,7 +6,7 @@ Rubsh (a.k.a. ruby-sh) - Inspired by [python-sh], allows you to call any program
 require 'rubsh'
 
 sh = Rubsh.new
-print(sh.cmd('ifconfig').call_with('wlan0').stdout_data)
+print(sh.cmd('ifconfig').call('wlan0').stdout_data)
 ```
 
 Output:
@@ -59,11 +59,11 @@ Or install it yourself as:
 # Create a shell
 sh = Rubsh.new
 
-# Create a command, use `command`/`cmd`
+# Create a command, use `cmd`/`command`
 cmd = sh.cmd("ls")
 
 # Invoke a command, use `call`/`call_with`
-result = cmd.call_with("-la")
+result = cmd.call("-la")
 
 # Print result
 print result.stdout_data
@@ -72,10 +72,10 @@ print result.stdout_data
 ### Passing Arguments
 
 ```ruby
-sh.cmd("ls").call_with("-l", "/tmp", color: "always", human_readable: true)
+sh.cmd("ls").call("-l", "/tmp", color: "always", human_readable: true)
   # => ["/usr/bin/ls", "-l", "/tmp", "--color=always", "--human-readable"]
 
-sh.cmd("curl").call_with("https://www.ruby-lang.org/", o: "page.html", silent: true)
+sh.cmd("curl").call("https://www.ruby-lang.org/", o: "page.html", silent: true)
   # => ["/usr/bin/curl", "https://www.ruby-lang.org/", "-opage.html", "--silent"]
 
 sh.cmd("git").call(:status, { v: true })
@@ -95,19 +95,19 @@ sh.cmd("git").call(:status, { v: true }, v: false)
 
 ```ruby
 # Successful
-r = sh.cmd("ls").call_with("/")
+r = sh.cmd("ls").call("/")
 r.exit_code # => 0
 
 # a `CommandReturnFailureError` raised when run failure
 begin
-  sh.cmd("ls").call_with("/some/non-existant/folder")
+  sh.cmd("ls").call("/some/non-existant/folder")
 rescue Rubsh::Exceptions::CommandReturnFailureError => e
   e.exit_code # => 2
 end
 
 # Treats as success use `:_ok_code`
-r = sh.cmd("ls").call_with("/some/non-existant/folder", _ok_code: [0, 1, 2])
-r = sh.cmd("ls").call_with("/some/non-existant/folder", _ok_code: 0..2)
+r = sh.cmd("ls").call("/some/non-existant/folder", _ok_code: [0, 1, 2])
+r = sh.cmd("ls").call("/some/non-existant/folder", _ok_code: 0..2)
 r.exit_code # => 2
 ```
 
@@ -115,29 +115,29 @@ r.exit_code # => 2
 
 ```ruby
 # Filename
-sh.cmd("ls").call_with(_out: "/tmp/dir_content")
-sh.cmd("ls").call_with(_out: ["/tmp/dir_content", "w"])
-sh.cmd("ls").call_with(_out: ["/tmp/dir_content", "w", 0600])
-sh.cmd("ls").call_with(_out: ["/tmp/dir_content", File::WRONLY|File::EXCL|File::CREAT, 0600])
+sh.cmd("ls").call(_out: "/tmp/dir_content")
+sh.cmd("ls").call(_out: ["/tmp/dir_content", "w"])
+sh.cmd("ls").call(_out: ["/tmp/dir_content", "w", 0600])
+sh.cmd("ls").call(_out: ["/tmp/dir_content", File::WRONLY|File::EXCL|File::CREAT, 0600])
 
 # File object
-File.open("/tmp/dir_content", "w") { |f| sh.cmd("ls").call_with(_out: f) }
+File.open("/tmp/dir_content", "w") { |f| sh.cmd("ls").call(_out: f) }
 
 # `stdout_data` & `stderr_data`
-r = sh.cmd("sh").call_with("-c", "echo out; echo err >&2")
+r = sh.cmd("sh").call("-c", "echo out; echo err >&2")
 r.stdout_data # => "out\n"
 r.stderr_data # => "err\n"
 
 # Redirects stderr and stderr to the same place use `_err_to_out`
-r = sh.cmd("sh").call_with("-c", "echo out; echo err >&2", _err_to_out: true)
+r = sh.cmd("sh").call("-c", "echo out; echo err >&2", _err_to_out: true)
 r.stdout_data # => "out\nerr\n"
 r.stderr_data # => nil
 
 # Read input from data
-sh.cmd("cat").call_with(_in_data: "hello").stdout_data # => "hello"
+sh.cmd("cat").call(_in_data: "hello").stdout_data # => "hello"
 
 # Read input from file
-sh.cmd("cat").call_with(_in: "/some/existant/file")
+sh.cmd("cat").call(_in: "/some/existant/file")
 ```
 
 ### Incremental Iteration
@@ -147,7 +147,7 @@ sh.cmd("cat").call_with(_in: "/some/existant/file")
 # when your process produces a newline. You can change this by changing the
 # buffer size of the command’s output with `_out_bufsize`/`_err_bufsize`.
 tail = sh.cmd("tail")
-tail.call_with("-f", "/var/log/some_log_file.log", _capture: ->(stdout, _stderr) {
+tail.call("-f", "/var/log/some_log_file.log", _capture: ->(stdout, _stderr) {
   print stdout
 })
 ```
@@ -156,17 +156,17 @@ tail.call_with("-f", "/var/log/some_log_file.log", _capture: ->(stdout, _stderr)
 
 ```ruby
 # Blocks
-sh.cmd("sleep").call_with(3)
+sh.cmd("sleep").call(3)
 p "...3 seconds later"
 
 # Doesn't block
-r = sh.cmd("sleep").call_with(3, _bg: true)
+r = sh.cmd("sleep").call(3, _bg: true)
 p "prints immediately!"
 r.wait()
 p "...and 3 seconds later"
 
 # Timeout
-r = sh.cmd("sleep").call_with(30, _bg: true)
+r = sh.cmd("sleep").call(30, _bg: true)
 p "prints immediately!"
 r.wait(timeout: 3)
 p "...and 3 seconds later"
@@ -176,20 +176,20 @@ p "...and 3 seconds later"
 
 ```ruby
 ll = sh.cmd("ls").bake("-l")
-ll.call_with("/tmp") # => ["/usr/bin/ls", "-l", "/tmp"]
+ll.call("/tmp") # => ["/usr/bin/ls", "-l", "/tmp"]
 
 # Equivalent
-sh.cmd("ls").call_with("-l", "/tmp")
+sh.cmd("ls").call("-l", "/tmp")
 
 # Calling whoami on a server. this is a lot to type out, especially if you wanted
 # to call many commands (not just whoami) back to back on the same server resolves
 # to "/usr/bin/ssh myserver.com -p 1393 whoami"
-sh.cmd('ssh').call_with("myserver.com", "-p 1393", "whoami")
+sh.cmd('ssh').call("myserver.com", "-p 1393", "whoami")
 
 # Wouldn't it be nice to bake the common parameters into the ssh command?
 myserver = sh.cmd('ssh').bake("myserver.com", p: 1393)
-myserver.call_with('whoami')
-myserver.call_with('pwd')
+myserver.call('whoami')
+myserver.call('pwd')
 
 # With a special kwarg
 sleep = sh.cmd('sleep').bake(_timeout: 2)
@@ -203,8 +203,8 @@ sleep.call(3) # => a `CommandReturnFailureError` raised
 # Use `bake`
 gst = sh.cmd("git").bake("status")
 
-gst.call_with() # => ["/usr/bin/git", "status"]
-gst.call_with("-s") # => ["/usr/bin/git", "status", "-s"]
+gst.call() # => ["/usr/bin/git", "status"]
+gst.call("-s") # => ["/usr/bin/git", "status", "-s"]
 ```
 
 ### Piping
@@ -212,8 +212,8 @@ gst.call_with("-s") # => ["/usr/bin/git", "status", "-s"]
 ```ruby
 # Run a series of commands connected by `_pipeline`
 r = sh.pipeline(_in_data: "hello world") do |pipeline|
-  sh.cmd("cat").call_with(_pipeline: pipeline)
-  sh.cmd("wc").call_with("-c", _pipeline: pipeline)
+  sh.cmd("cat").call(_pipeline: pipeline)
+  sh.cmd("wc").call("-c", _pipeline: pipeline)
 end
 r.stdout_data # => "11\n"
 ```
@@ -290,7 +290,7 @@ Glob expansion is a feature of a shell, like Bash, and is performed by the shell
 ```ruby
 sh = Rubsh.new
 rawsh = sh.cmd('bash').bake('-c')
-print(rawsh.call_with('echo Hello').stdout_data) # => "Hello\n"
+print(rawsh.call('echo Hello').stdout_data) # => "Hello\n"
 ```
 
 ### How do I call a program that isn’t in $PATH?
@@ -326,7 +326,7 @@ Use:
 
 ```ruby
 sh = Rubsh.new
-sh.cmd('my-command').call_with({ arg1: "val1" }, "args2", { arg3: "val3" })
+sh.cmd('my-command').call({ arg1: "val1" }, "args2", { arg3: "val3" })
 ```
 
 

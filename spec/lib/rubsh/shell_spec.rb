@@ -9,8 +9,8 @@ RSpec.describe Rubsh::Shell do
   describe "#pipeline" do
     it "returns a RunningPipeline instance" do
       r = subject.pipeline do |pipeline|
-        subject.cmd("echo").call_with("-n", "hello world", _pipeline: pipeline)
-        subject.cmd("wc").call_with("-c", _pipeline: pipeline)
+        subject.cmd("echo").call("-n", "hello world", _pipeline: pipeline)
+        subject.cmd("wc").call("-c", _pipeline: pipeline)
       end
       expect(r).to be_a(Rubsh::RunningPipeline)
       expect(r.stdout_data).to eq("11\n")
